@@ -20,7 +20,6 @@ A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Validation**: [Zod](https://zod.dev/)
 - **Media**: [Cloudinary](https://cloudinary.com/)
-- **Icons**: [Lucide React](https://lucide.dev/) (implied)
 
 ## 🏁 Getting Started
 
@@ -35,8 +34,7 @@ A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
-   cd auth-next-ecommerce
+   git clone <repository-url>   
    ```
 
 2. Install dependencies:
@@ -73,7 +71,7 @@ A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v
   - `(shop)/`: Main e-commerce routes (cart, product, payment, orders).
   - `(profile)/`: User-specific routes.
   - `actions/`: Server actions for handling form submissions and data mutations.
-  - `api/`: API route handlers.
+  - `api/`: API Auth.js route handlers.
 - `lib/`: Shared utility functions and database configuration.
 - `ui/`: Reusable UI components.
 - `types.d.ts`: TypeScript definitions
