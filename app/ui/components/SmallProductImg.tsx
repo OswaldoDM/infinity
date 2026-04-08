@@ -6,9 +6,10 @@ interface Props {
    width: string;
    height: string;
    classname?: string;
+   sizes?: string;
 }
 
-function SmallProductImg({ src, alt, width, height, classname }: Props) {
+function SmallProductImg({ src, alt, width, height, classname, sizes }: Props) {
    return (
       <div className={`relative ${width} ${height} ${classname}`}>
          <Image
@@ -16,6 +17,7 @@ function SmallProductImg({ src, alt, width, height, classname }: Props) {
             alt={alt || ''}
             className="object-contain"
             fill
+            sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
          />
       </div>
    )

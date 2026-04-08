@@ -43,6 +43,7 @@ export default function ProfileImageUpload() {
             alt="Profile Image"
             fill
             className="object-cover"
+            sizes="(max-width: 1536px) 120px, 140px"
           />
         )}
       </div>

@@ -220,6 +220,7 @@ function Steps({products, userAddresses, userId}: Props) {
                            alt={item.product?.name} 
                            width='w-[54px]' 
                            height='h-[54px]' 
+                           sizes="54px"
                         />
                         <div className=" min-w-[200px]">
                            <p className="font-semibold text-base">{item.product?.name}</p>
@@ -254,7 +255,7 @@ function Steps({products, userAddresses, userId}: Props) {
                {selectedPaymentMethod === 'credit_card' && (
                <div className="flex flex-col gap-3">
                   <div className="relative w-[254px] h-[142px]">
-                     <Image src="/creditcard.png" alt="Credit Card" objectFit="cover" fill />                     
+                     <Image src="/creditcard.png" alt="Credit Card" className="object-cover" fill sizes="254px" />                     
                   </div>
                   <form onSubmit={handleCreditCard}>
                      <div className="flex flex-col gap-2">

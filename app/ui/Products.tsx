@@ -104,7 +104,7 @@ function Products({ categories, products }: Props) {
                   className="flex flex-col justify-between items-center gap-3 py-3 cursor-pointer bg-white rounded-xl border border-gray-400 hover:border-black transition duration-200 2xl:gap-5 "
                >
                   <p className="text-xs 2xl:text-sm font-inter">{product.name}</p>                  
-                  <SmallProductImg src={product.image_url} alt={product.name} width='w-[128px]' height='h-[100px]' />
+                  <SmallProductImg src={product.image_url} alt={product.name} width='w-[128px]' height='h-[100px]' sizes="128px" />
                   <p className="font-semibold">{Number(product.price)}$</p>
                </Link>
             ))}

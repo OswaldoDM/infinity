@@ -97,7 +97,7 @@ CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 CREATE INDEX idx_order_items_product_id ON order_items(product_id);
 
 
--- Actualizar stock de productos al agregar un item de orden
+-- Función para actualizar stock al agregar un item de orden
 CREATE OR REPLACE FUNCTION update_stock() RETURNS TRIGGER AS $$
 BEGIN
     -- Validar stock disponible
@@ -111,9 +111,25 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
+-- Crear Trigger
 CREATE TRIGGER trg_update_stock
 AFTER INSERT ON order_items
 FOR EACH ROW EXECUTE FUNCTION update_stock();
+
+-- Función para restaurar stock al borrar un item
+CREATE OR REPLACE FUNCTION restore_stock() RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE products
+    SET stock_quantity = stock_quantity + OLD.quantity
+    WHERE id = OLD.product_id;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Crear Trigger
+CREATE TRIGGER trg_restore_stock
+AFTER DELETE ON order_items
+FOR EACH ROW EXECUTE FUNCTION restore_stock();
+
 
 
