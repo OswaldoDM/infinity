@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
-import { authConfig } from "./auth.config";
-import Credentials from "next-auth/providers/credentials";
-import { findUserByEmail } from "@/lib/database/auth.repository";
 import bcrypt from "bcryptjs";
+import Credentials from "next-auth/providers/credentials";
+import { authConfig } from "./auth.config";
+import { findUserByEmail } from "@/lib/database/repositories/auth.repository";
 import { loginSchema } from "@/lib/auth/schemas";
 
 export const { auth, signIn, signOut, handlers } = NextAuth({

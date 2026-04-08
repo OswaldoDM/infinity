@@ -1,5 +1,5 @@
 
-import { pool } from "./connection";
+import { pool } from "../connection";
 
 export async function getProducts(): Promise<Product[]> {
   const query = `

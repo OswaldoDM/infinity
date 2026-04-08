@@ -1,5 +1,5 @@
-import { getCategories } from "@/lib/database/categories.repository";
-import { getProducts } from "@/lib/database/products.repository";
+import { getCategories } from "@/lib/database/repositories/categories.repository";
+import { getProducts } from "@/lib/database/repositories/products.repository";
 import Products from "./ui/Products";
 
 async function Home() {

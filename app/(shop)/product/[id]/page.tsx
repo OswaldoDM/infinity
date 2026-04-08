@@ -1,7 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProductById } from "@/lib/database/products.repository";
+import { getProductById } from "@/lib/database/repositories/products.repository";
 import AddToCartButton from "./components/AddToCartButton";
 import ProductImage from "./components/ProductImage";
 import BackToStoreBtn from "@/app/ui/components/BackToStoreBtn";

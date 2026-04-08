@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
-import { getAddressesByUser } from "@/lib/database/addresses.repository";
 import Steps from "./components/Steps";
-import { getProducts } from "@/lib/database/products.repository";
+import { getAddressesByUser } from "@/lib/database/repositories/addresses.repository";
+import { getProducts } from "@/lib/database/repositories/products.repository";
 
 async function PaymentPage() {
     const session = await auth();

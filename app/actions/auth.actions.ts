@@ -1,7 +1,7 @@
 'use server';
 
 import { signIn, signOut } from '@/auth';
-import { createUser, findUserByEmail } from '@/lib/database/auth.repository';
+import { createUser, findUserByEmail } from '@/lib/database/repositories/auth.repository';
 import { registerSchema } from "@/lib/auth/schemas";
 import { authErrorHandler } from '@/lib/auth/errorHandler';
 import bcrypt from 'bcryptjs';

@@ -1,4 +1,4 @@
-import { pool } from "./connection";
+import { pool } from "../connection";
 
 export async function getAddressesByUser(userId: string): Promise<Address[]> {
   const query = `
