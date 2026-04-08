@@ -9,7 +9,7 @@ async function Home() {
   return (
     <>
       <div className="text-center pb-6">
-        <h1 className="text-red-500">Live without Limits</h1>
+        <h1>Live without Limits</h1>
         <p className="mt-2 text-gray_secondary font-inter">
           Explore a world of endless possibilities
         </p>
