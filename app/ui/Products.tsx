@@ -105,7 +105,7 @@ function Products({ categories, products }: Props) {
                >
                   <p className="text-xs 2xl:text-sm font-inter">{product.name}</p>                  
                   <SmallProductImg src={product.image_url} alt={product.name} width='w-[128px]' height='h-[100px]' sizes="128px" />
-                  <p className="font-semibold">{Number(product.price)}$</p>
+                  <p className="font-semibold">${Number(product.price)}</p>
                </Link>
             ))}
          </div>

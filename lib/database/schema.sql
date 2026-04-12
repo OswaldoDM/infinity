@@ -116,6 +116,7 @@ CREATE TRIGGER trg_update_stock
 AFTER INSERT ON order_items
 FOR EACH ROW EXECUTE FUNCTION update_stock();
 
+
 -- Función para restaurar stock al borrar un item
 CREATE OR REPLACE FUNCTION restore_stock() RETURNS TRIGGER AS $$
 BEGIN
@@ -130,6 +131,3 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_restore_stock
 AFTER DELETE ON order_items
 FOR EACH ROW EXECUTE FUNCTION restore_stock();
-
-
-

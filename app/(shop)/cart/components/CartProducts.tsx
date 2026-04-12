@@ -13,7 +13,7 @@ function CartProducts({ products }: Props) {
    const { cart, fullCart, totalCart, deleteProduct, updateQuantity } = useCart(products);
 
    return (
-      <div className={`flex justify-center h-full 2xl:pt-[100px] ${cart.length === 0 ? 'pt-[40px]' : 'pt-[80px]'}`}>
+      <div className={`flex justify-center h-full ${cart.length === 0 ? 'pt-[40px]' : 'pt-[60px]'} 2xl:pt-[100px]`}>
          {cart.length === 0 ? (
             <div className='flex flex-col items-center justify-center gap-6 w-full max-w-[500px] bg-white rounded-[2rem] p-10 py-16 shadow-sm border border-gray-100 mt-4 h-fit'>
                <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mb-2">
@@ -33,7 +33,9 @@ function CartProducts({ products }: Props) {
             </div>
          ) : (
             <div className='flex gap-6 h-fit'>
-               <div className='flex flex-col gap-4'>
+
+               {/* SHOPPING CART */}
+               <div className='flex flex-col gap-4 2xl:min-w-[460px]'>
                   <div className='flex items-center gap-1'>
                      <h3>Shooping Cart</h3>
                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -51,7 +53,7 @@ function CartProducts({ products }: Props) {
                                  <p className='font-semibold'>{item.product?.name}</p>
                                  <p className='font-semibold text-black_secondary'>${((item.product?.price || 0) * item.quantity)}</p>
                                  <span
-                                    className='font-inter text-[10px] text-black_secondary cursor-pointer hover:text-red-600 transition-colors'
+                                    className='font-inter text-[10px] 2xl:text-xs text-black_secondary cursor-pointer hover:text-red-600 transition-colors'
                                     onClick={() => deleteProduct(item.productId)}>
                                     Delete
                                  </span>
@@ -76,10 +78,12 @@ function CartProducts({ products }: Props) {
                      ))}
                   </ul>
                </div>
-               <div className='flex flex-col gap-4 min-w-[260px]'>
+
+               {/* ORDER SUMMARY */}
+               <div className='flex flex-col gap-4 min-w-[260px] 2xl:min-w-[360px]'>
                   <h3>Order Summary</h3>
                   <div className='flex flex-col gap-1'>
-                     <label htmlFor="discount code" className='font-inter text-xs text-black_secondary'>
+                     <label htmlFor="discount code" className='font-inter text-xs 2xl:text-sm text-black_secondary'>
                         Discount code
                      </label>
                      <input
@@ -89,7 +93,7 @@ function CartProducts({ products }: Props) {
                         placeholder='Code'
                      />
                   </div>
-                  <p className='font-inter text-xs text-black_secondary'>Free Shipping</p>
+                  <p className='font-inter text-xs 2xl:text-sm text-black_secondary'>Free Shipping</p>
                   <div className='flex justify-between'>
                      <p className='font-inter font-medium'>Total</p>
                      <p className='font-bold text-base'>${totalCart}</p>

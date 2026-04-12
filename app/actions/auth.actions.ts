@@ -38,7 +38,8 @@ export const registerAction: AuthAction = async (state, formData) => {
       password_hash: passwordHash
     });
     
-    await signIn('credentials', { ...Object.fromEntries(formData), redirectTo: '/' }); // Login automático tras registro exitoso
+    // Login automático tras registro exitoso
+    await signIn('credentials', { ...Object.fromEntries(formData), redirectTo: '/' });
 
   } catch (error) {
     return authErrorHandler(error);

@@ -6,10 +6,10 @@ export async function createOrderAction(
   userId: number,
   totalAmount: number,
   shippingAddressId: number | null,
-  items: Item[]
+  fullCartItems: fullCartItem[]
 ) {
   try {
-    const orderId = await createOrder(userId, totalAmount, shippingAddressId, items);
+    const orderId = await createOrder(userId, totalAmount, shippingAddressId, fullCartItems);
     return { success: true, orderId };
   } catch (error: any) {
     return { success: false, error: error.message };
