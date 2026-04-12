@@ -4,7 +4,7 @@ export async function createOrder(
   userId:number, 
   totalAmount:number, 
   shippingAddressId:number | null, 
-  items:Item[]): Promise<number> {
+  items:fullCartItem[]): Promise<number> {
 
   // Atomicidad y el uso de Transacciones
   // La atomicidad es la propiedad de una transacción que garantiza que todas las operaciones 
