@@ -18,10 +18,12 @@ interface Props {
 }
 
 function Steps({products, userAddresses, userId}: Props) {   
-   const defaultAddress = userAddresses.find((a) => a.is_default) || userAddresses[0];
-   const [addresses, setAddresses] = useState<Address[]>(userAddresses);
-   const [selectedAddressId, setSelectedAddressId] = useState(defaultAddress?.id || null);   
    const [currentStep, setCurrentStep] = useState(1);
+
+   const defaultAddress = userAddresses.find((a) => a.is_default) || userAddresses[0];
+   const [selectedAddressId, setSelectedAddressId] = useState(defaultAddress?.id || null);
+
+   const [addresses, setAddresses] = useState<Address[]>(userAddresses);
    const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
    const [cardError, setCardError] = useState('');
    const [paypalError, setPaypalError] = useState('');
@@ -58,10 +60,10 @@ function Steps({products, userAddresses, userId}: Props) {
       
       const formData = new FormData(e.currentTarget);
       const cardNumber = formData.get('cardNumber') as string;
+      const cleanCardNumber = cardNumber.replace(/\s+/g, '');
       const expDate = formData.get('expDate') as string;
       const cvv = formData.get('cvv') as string;
 
-      const cleanCardNumber = cardNumber.replace(/\s+/g, '');
       const cardNumberRegex = /^\d{13,19}$/;
       const expDateRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
       const cvvRegex = /^\d{3,4}$/;
@@ -142,7 +144,8 @@ function Steps({products, userAddresses, userId}: Props) {
    return (
    <>
       <div className="flex justify-center gap-[74px] h-fit w-full">
-         <div className={`flex gap-2 ${currentStep === 1 ? 'opacity-100' : 'opacity-30 transition-all duration-300'}`}>
+
+         <div className={`flex gap-2 ${currentStep === 1 ? 'opacity-100' : 'opacity-30 transition-all duration-200'}`}>
             <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
                <svg width="12" height="15" viewBox="0 0 12 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fill="white" d="M5.69526 0C4.94502 0.000307971 4.20222 0.148784 3.50951 0.436906C2.81679 0.725028 2.1878 1.14712 1.65864 1.67896C1.12948 2.2108 0.710561 2.84191 0.425937 3.53607C0.141312 4.23023 -0.00341517 4.97376 6.11705e-05 5.724C6.11705e-05 9.6792 4.08006 13.3056 5.33526 14.2656C5.44063 14.3526 5.57301 14.4002 5.70966 14.4002C5.84631 14.4002 5.97869 14.3526 6.08406 14.2656C7.34166 13.2768 11.3881 9.6792 11.3881 5.724C11.3915 4.97397 11.2469 4.23063 10.9624 3.53662C10.6779 2.84262 10.2592 2.21162 9.73033 1.67981C9.20142 1.148 8.57271 0.72586 7.88028 0.437596C7.18784 0.149333 6.4453 0.000623828 5.69526 0ZM5.69526 8.0904C5.22059 8.0904 4.75657 7.94964 4.36189 7.68593C3.96721 7.42221 3.6596 7.04738 3.47795 6.60884C3.2963 6.1703 3.24877 5.68774 3.34138 5.22218C3.43398 4.75663 3.66256 4.32899 3.9982 3.99334C4.33385 3.6577 4.76149 3.42912 5.22704 3.33652C5.6926 3.24391 6.17516 3.29144 6.6137 3.47309C7.05224 3.65474 7.42707 3.96235 7.69079 4.35703C7.9545 4.75171 8.09526 5.21573 8.09526 5.6904C8.09526 6.32692 7.8424 6.93737 7.39232 7.38746C6.94223 7.83754 6.33178 8.0904 5.69526 8.0904Z" />
@@ -154,7 +157,7 @@ function Steps({products, userAddresses, userId}: Props) {
             </div>
          </div>
 
-         <div className={`flex gap-2 ${currentStep > 1 ? 'opacity-100' : 'opacity-30'} transition-all duration-300`}>
+         <div className={`flex gap-2 ${currentStep > 1 ? 'opacity-100' : 'opacity-30'} transition-all duration-200`}>
             <div className="w-6 h-6 rounded-full bg-black flex items-center justify-center">
                <svg width="12" height="18" viewBox="0 0 12 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path fill="white" d="M11.2229 7.98007C11.0473 7.84184 9.49689 6.13449 8.61893 5.33873C8.61519 5.33499 8.61519 5.33499 8.61519 5.33126V1.65504C8.61519 0.743462 7.87173 0 6.96015 0H1.53923C0.691158 0 0 0.694894 0 1.53923V10.1619C0 11.0735 0.743462 11.8169 1.65504 11.8169H3.23163H3.63138C3.69863 11.8169 3.75467 11.7572 3.7472 11.6899L3.66127 10.9577C3.6538 10.8979 3.60523 10.8568 3.54545 10.8568H3.39975H3.31009C3.24658 10.8568 3.19427 10.8045 3.19427 10.741V0.945205C3.19427 0.881694 3.24658 0.82939 3.31009 0.82939H6.97136C7.34122 0.82939 7.64384 1.132 7.64384 1.50187V9.50436V10.2927C7.64384 10.5467 7.46824 10.7634 7.23288 10.8306C7.22914 10.8306 7.22914 10.8306 7.2254 10.8306C6.82565 10.6139 6.35492 9.68742 6.28394 9.54172C6.27646 9.53051 6.27273 9.51557 6.27273 9.50436C6.24658 9.26899 5.98132 6.99004 4.76712 6.99004C4.7335 6.99004 4.69988 6.99004 4.66625 6.99377C4.66625 6.99377 3.69489 7.07596 4.49813 9.84433C4.49813 9.8518 4.50187 9.85554 4.50187 9.86301L4.85679 12.9303C4.85679 12.934 4.85679 12.9377 4.86052 12.9452C4.89041 13.061 5.2939 14.6264 6.33624 15.736C6.35492 15.7584 6.36613 15.7846 6.36613 15.8144V16.0797C6.36613 16.0872 6.36239 16.0909 6.35492 16.0909H6.26152C6.03362 16.0909 5.84682 16.2777 5.84682 16.5056V17.5853C5.84682 17.8132 6.03362 18 6.26152 18H10.6588C10.8867 18 11.0735 17.8132 11.0735 17.5853V16.5131C11.0735 16.2852 10.8867 16.0984 10.6588 16.0984C10.6513 16.0984 10.6476 16.0946 10.6476 16.0872C10.7933 14.7347 11.3163 10.1096 11.5965 9.7472C11.604 9.73599 11.6115 9.72478 11.6152 9.70984C11.6638 9.54172 11.9066 8.51432 11.2229 7.98007ZM1.72976 10.7484C1.72976 10.8082 1.6812 10.8531 1.62516 10.8531C1.25903 10.8531 0.960149 10.5542 0.960149 10.188V1.4944C0.960149 1.12827 1.25903 0.82939 1.62516 0.82939C1.68493 0.82939 1.72976 0.877958 1.72976 0.933997V10.7484Z" />
@@ -168,7 +171,9 @@ function Steps({products, userAddresses, userId}: Props) {
       </div>
 
       {/* SELECT ADDRESS */}
-      <div className={`mt-12 2xl:mt-16 transition-all duration-300 ${currentStep === 1 ? 'flex flex-col items-center opacity-100' : 'hidden opacity-0'}`}>
+      <div className={`mt-12 2xl:mt-16 transition-all duration-300 
+            ${currentStep === 1 ? 'flex flex-col items-center' : 'hidden'}`}
+      >
          <h3 className="mb-4">Select Address</h3>
          <div className="flex flex-col gap-4">
             {addresses.map((address) => (
@@ -224,20 +229,22 @@ function Steps({products, userAddresses, userId}: Props) {
          </div>                  
       </div>
 
+      {/* PAYMENT */}
       {isSubmitting ? (
          <div className='flex justify-center items-center h-[80%]'>
             <div className='animate-spin rounded-full h-32 w-32 border-b-4 border-gray-900'></div>      
          </div>
-         ) : (
-         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex justify-center gap-6 opacity-100' : 'hidden opacity-0'}`}>                       
-            
-            {/* SUMMARY */}
-            <div className="">
+         ) : (         
+         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex justify-center gap-6' : 'hidden'}`}>         
+            <div className="min-w-[440px]">
                <h3 className="mb-3">Summary</h3>
                <div className='bg-white rounded-xl py-5 px-6'>
-                  <div className={`max-h-[220px] mb-6 ${fullCart.length > 3 ? 'overflow-y-scroll' : ''}`}>
+                  <div className={`max-h-[220px] mb-8 ${fullCart.length > 3 ? 'overflow-y-scroll' : ''}`}>
                      {fullCart.map((item) => (
-                     <div key={item.product?.id} className={`flex items-center gap-2 mb-6 ${fullCart.length > 3 ? 'mr-3' : ''}`}>
+                     <div 
+                        key={item.product?.id} 
+                        className={`flex items-center gap-2 mb-6 ${fullCart.length > 3 ? 'mr-5' : ''}`}
+                     >
                         <SmallProductImg 
                            src={item.product?.image_url} 
                            alt={item.product?.name} 
@@ -245,7 +252,7 @@ function Steps({products, userAddresses, userId}: Props) {
                            height='h-[54px]' 
                            sizes="54px"
                         />
-                        <div className=" min-w-[200px]">
+                        <div className=" min-w-[280px]">
                            <p className="font-semibold text-base">{item.product?.name}</p>
                            <p className="text-xs text-gray-500 mt-1 font-inter">Qty: {item.quantity}</p>
                         </div>                     
@@ -253,22 +260,23 @@ function Steps({products, userAddresses, userId}: Props) {
                      </div>
                      ))}
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipping Address</p>                  
-                     <p className="max-w-[200px] text-gray-600">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
+                  <div className="flex gap-6 font-inter mb-6">
+                     <div className="">
+                        <p className="font-bold text-black_secondary mb-1">Shipping Address</p>                  
+                        <p className="max-w-[200px] text-gray-600">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
+                     </div>
+                     <div className="">
+                        <p className="font-bold text-black_secondary mb-1">Shipment Method</p>
+                        <p className="text-gray-600">Free Shipping</p>
+                     </div>
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipment Method</p>
-                     <p className="text-gray-600">Free Shipping</p>
-                  </div>
-                  <div className="font-inter font-bold flex justify-between mt-6">
+                  <div className="font-inter font-bold text-lg flex justify-between">
                      <p>Total</p>
                      <p>${totalCart}</p>
                   </div>
                </div>            
-            </div>         
-
-            {/* PAYMENT */}
+            </div>
+            
             <div className="min-w-[254px] max-w-[254px]">
                <h3 className="mb-3">Payment</h3>
                <div className="flex gap-5 mb-3">
