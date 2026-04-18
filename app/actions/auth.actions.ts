@@ -1,7 +1,7 @@
 'use server';
 
 import { signIn, signOut } from '@/auth';
-import { createUser, findUserByEmail } from '@/lib/database/auth.repository';
+import { createUser, findUserByEmail } from '@/lib/database/repositories/auth.repository';
 import { registerSchema } from "@/lib/auth/schemas";
 import { authErrorHandler } from '@/lib/auth/errorHandler';
 import bcrypt from 'bcryptjs';
@@ -38,7 +38,8 @@ export const registerAction: AuthAction = async (state, formData) => {
       password_hash: passwordHash
     });
     
-    await signIn('credentials', { ...Object.fromEntries(formData), redirectTo: '/' }); // Login automático tras registro exitoso
+    // Login automático tras registro exitoso
+    await signIn('credentials', { ...Object.fromEntries(formData), redirectTo: '/' });
 
   } catch (error) {
     return authErrorHandler(error);

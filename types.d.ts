@@ -1,7 +1,9 @@
 import React from "react";
-import { DefaultSession } from "next-auth";
 
 declare global {
+
+  type InputChange = React.ChangeEvent<HTMLInputElement>;
+  type FormSubmit = React.FormEvent<HTMLFormElement>;
 
   interface User {
     id: number;
@@ -52,9 +54,12 @@ declare global {
     productId: number;
     quantity: number;
   }
-
-  type InputChange = React.ChangeEvent<HTMLInputElement>;
-  type FormSubmit = React.FormEvent<HTMLFormElement>;
+  
+  interface fullCartItem { 
+    productId: number; 
+    quantity: number; 
+    priceAtPurchase: number 
+  }
 
   interface Address {
     id: number;    
@@ -65,44 +70,45 @@ declare global {
     is_default: boolean;
     phone: string;
     shortname: string;
+  }  
+
+  interface AddressActionState {
+    success: boolean;
+    error?: string;
+    address?: Address;
   }
 
-  interface Item { 
-    productId: number; 
-    quantity: number; 
-    priceAtPurchase: number 
+  interface DeleteAddressState {
+    success: boolean;
+    error?: string;
+    deletedId?: number;
   }
-  
+
+  interface OrderItem {
+    id: number;
+    product_id: number;
+    quantity: number;
+    price_at_purchase: number | string;
+    product_name: string;
+    product_image: string;
+  }
+
+  interface Order {
+    id: number;
+    user_id: number;
+    order_date: Date;
+    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+    total_amount: number | string;
+    shipping_address_id: number;
+    street: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    shortname: string;
+    address_phone: string;
+    items: OrderItem[];
+  }
 }
 
-// Extiende los tipos de NextAuth para incluir campos custom en la sesión
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      username: string;
-      role: string;
-      first_name?: string;
-      last_name?: string;
-      phone?: string;
-    } & DefaultSession["user"];
-  }
 
-  interface User {
-    username?: string;
-    role?: string;
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-  }
-}
-
-declare module "next-auth/jwt" {
-  interface JWT {
-    username?: string;
-    role?: string;
-    first_name?: string;
-    last_name?: string;
-    phone?: string;
-  }
-}

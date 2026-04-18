@@ -1,5 +1,5 @@
-import { getCategories } from "@/lib/database/categories.repository";
-import { getProducts } from "@/lib/database/products.repository";
+import { getCategories } from "@/lib/database/repositories/categories.repository";
+import { getProducts } from "@/lib/database/repositories/products.repository";
 import Products from "./ui/Products";
 
 async function Home() {
@@ -8,12 +8,12 @@ async function Home() {
 
   return (
     <>
-      <div className="text-center pb-6">
-        <h1>Live without Limits</h1>
-        <p className="mt-2 text-gray_secondary font-inter">
-          Explore a world of endless possibilities
+      <div className="text-center pb-8 ">
+        <h1 className="tracking-tight mb-4">Infinity</h1>
+        <p className=" text-gray_secondary font-inter max-w-lg 2xl:max-w-xl mx-auto leading-relaxed">
+          Explore a world of endless possibilities. Discover curated collections where premium quality 
+          meets visionary design.
         </p>
-        {/* <p className="text-center mt-3">Sponsored by STRIPE</p> */}
       </div>            
       <Products categories={categories} products={products} />      
     </>

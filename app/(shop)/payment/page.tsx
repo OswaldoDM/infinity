@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
-import { getAddressesByUser } from "@/lib/database/addresses.repository";
 import Steps from "./components/Steps";
-import { getProducts } from "@/lib/database/products.repository";
+import { getAddressesByUser } from "@/lib/database/repositories/addresses.repository";
+import { getProducts } from "@/lib/database/repositories/products.repository";
 
 async function PaymentPage() {
     const session = await auth();
@@ -10,9 +10,13 @@ async function PaymentPage() {
 
   return (
     <div className="flex flex-col h-full pt-3 2xl:pt-6">        
-        <Steps userId={session?.user.id || ''} products={products} userAddresses={userAddresses}/>
+        <Steps 
+            userId={session?.user.id || ''} 
+            products={products} 
+            userAddresses={userAddresses}
+        />
     </div>
   )
 }
 
-export default PaymentPage
+export default PaymentPage;

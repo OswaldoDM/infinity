@@ -1,4 +1,4 @@
-import { getProducts } from '@/lib/database/products.repository';
+import { getProducts } from '@/lib/database/repositories/products.repository';
 import CartProducts from './components/CartProducts';
 
 async function CartPage() {

@@ -1,4 +1,4 @@
-import { getOrderById } from "@/lib/database/orders.repository";
+import { getOrderById } from "@/lib/database/repositories/orders.repository";
 import Button from "@/app/ui/Button";
 import Link from "next/link";
 import { notFound } from "next/navigation";

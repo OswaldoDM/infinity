@@ -1,4 +1,4 @@
-import { pool } from "./connection";
+import { pool } from "../connection";
 
 type CreateUserData = Pick<User, 'username' | 'email' | 'password_hash'>;
 

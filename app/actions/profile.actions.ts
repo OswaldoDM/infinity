@@ -1,6 +1,6 @@
 'use server';
 import { uploadImage } from '@/lib/cloudinary';
-import { updateUserImage } from '@/lib/database/auth.repository';
+import { updateUserImage } from '@/lib/database/repositories/auth.repository';
 import { auth } from '@/auth';
 
 export async function uploadProfileImageAction(formData: FormData) {
