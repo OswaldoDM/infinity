@@ -1,9 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import Image from 'next/image';
 import { uploadProfileImageAction } from '@/app/actions/profile.actions';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export default function ProfileImageUpload() {
   const { data: session, update } = useSession();

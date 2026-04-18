@@ -62,36 +62,55 @@ export async function createOrder(
   }
 }
 
-export async function getOrderById(orderId: number) {
-  const query = `
-    SELECT 
-      o.id,
-      o.user_id,
-      o.order_date,
-      o.status,
-      o.total_amount,
-      o.shipping_address_id,
-      a.street,
-      a.city,
-      a.state,
-      a.postal_code,
-      a.country,
-      a.shortname,
-      a.phone as address_phone,
-      json_agg(
-        json_build_object(
-          'id', oi.id,
-          'product_id', oi.product_id,
-          'quantity', oi.quantity,
-          'price_at_purchase', oi.price_at_purchase,
-          'product_name', p.name,
-          'product_image', p.image_url
-        )
-      ) as items
-    FROM orders o
-    LEFT JOIN addresses a ON o.shipping_address_id = a.id
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    LEFT JOIN products p ON oi.product_id = p.id
+/****
+
+Como funciona el BASE_ORDER_QUERY ?
+
+1. Traemos toda la información básica de las tablas orders y addresses
+
+2. Una orden podria tener multiples productos, por eso necesitamos crear
+   un array de objetos con todos los productos y su data. Para esto usamos
+   funciones de PostgreSQL. Usamos json_agg() para crear el arreglo y
+   json_build_object() para crear cada objeto con las propiedades que le 
+   indiquemos.
+
+3. Luego hay que conectar las tablas. Empezamos tomando la tabla principal
+   orders y la llamamos o.
+
+   LEFT JOIN addresses a   ->  Une la order con la address cuando o.shipping_address_id = a.id
+   LEFT JOIN order_items oi ->  Une la order con los order_items cuando o.id = oi.order_id
+
+   LEFT JOIN products p -> Toma los order_items encontrados y los cruza con la tabla products para 
+   obtener el nombre del producto y su imagen, ya que esa data no esta en la tabla order_items.
+
+   GROUP BY o.id, a.id -> Agrupa los resultados por orden y address para que json_agg 
+   funcione correctamente. le estás diciendo a la base de datos: "Agrupa y fusiona las filas que 
+   tengan la misma order y la misma address.
+
+****/
+
+const BASE_ORDER_QUERY = `
+  SELECT 
+    o.id, o.user_id, o.order_date, o.status, o.total_amount, o.shipping_address_id,
+    a.street, a.city, a.state, a.postal_code, a.country, a.shortname, a.phone as address_phone,
+    json_agg(
+      json_build_object(
+        'id', oi.id,
+        'product_id', oi.product_id,
+        'quantity', oi.quantity,
+        'price_at_purchase', oi.price_at_purchase,
+        'product_name', p.name,
+        'product_image', p.image_url
+      )
+    ) as items
+  FROM orders o
+  LEFT JOIN addresses a ON o.shipping_address_id = a.id
+  LEFT JOIN order_items oi ON o.id = oi.order_id
+  LEFT JOIN products p ON oi.product_id = p.id
+`;
+
+export async function getOrderById(orderId: number): Promise<Order | null> {
+  const query = BASE_ORDER_QUERY + `
     WHERE o.id = $1
     GROUP BY o.id, a.id;
   `;
@@ -99,3 +118,38 @@ export async function getOrderById(orderId: number) {
   return result.rows[0] || null;
 }
 
+export async function getOrderByUserID(userId: number): Promise<Order[]> {
+  const query = BASE_ORDER_QUERY + `
+    WHERE o.user_id = $1
+    GROUP BY o.id, a.id
+    ORDER BY o.order_date DESC;
+  `;
+  const result = await pool.query(query, [userId]);
+  return result.rows;
+}
+
+
+/**
+
+Porque necesitamos la id que tiene cada producto en la tabla order_items
+en el objeto items? 
+
+Para devoluciones, quejas o cancelaciones parciales
+
+Imagina que en un futuro quieres agregar un botón al lado de 
+cada producto de la orden que diga "Devolver este artículo" o 
+"Levantar reporte".
+
+Si el usuario hace clic ahí, ¿qué le envías al backend?
+
+Si le envías solo el order.id y el product_id, el backend tendría 
+que buscar "el artículo en la orden X que coincida con el producto Y".
+
+Si le envías directamente el oi.id, el backend sabe exactamente y sin 
+margen de error cuál fila en tu tabla order_items debe actualizar.
+
+json_build_object(
+        'id', oi.id, -> ESTA DE ACA        
+      )
+
+**/

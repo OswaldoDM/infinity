@@ -8,7 +8,14 @@ async function Navbar() {
 
   return (
     <header className="pt-5 pb-1 flex justify-between items-center">
-      <Link href='/' className="font-bold text-3xl">Infinity</Link>
+      <Link href='/'>
+        <Image
+          src="/logo.svg"
+          alt="Logo"
+          width={60}
+          height={60}
+        />
+      </Link>
       <nav className="flex gap-2">
         {user ? (
           <Link

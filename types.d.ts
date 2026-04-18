@@ -1,5 +1,4 @@
 import React from "react";
-// import { DefaultSession } from "next-auth";
 
 declare global {
 
@@ -84,7 +83,32 @@ declare global {
     error?: string;
     deletedId?: number;
   }
-  
+
+  interface OrderItem {
+    id: number;
+    product_id: number;
+    quantity: number;
+    price_at_purchase: number | string;
+    product_name: string;
+    product_image: string;
+  }
+
+  interface Order {
+    id: number;
+    user_id: number;
+    order_date: Date;
+    status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+    total_amount: number | string;
+    shipping_address_id: number;
+    street: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    shortname: string;
+    address_phone: string;
+    items: OrderItem[];
+  }
 }
 
 

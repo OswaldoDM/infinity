@@ -16,7 +16,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Infinity",
-  description: "Next.js E-commerce",
+  description: "Explore a world of endless possibilities",
+  //favicon
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({children}:Readonly<{ children: React.ReactNode }>) {
