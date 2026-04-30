@@ -12,7 +12,9 @@ export const authConfig = {
   callbacks: {    
     // AUTORIZACIÓN DE RUTAS
     authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user; // true or false
+      const isLoggedIn = !!auth?.user;
+
+      const isAdminRoute = nextUrl.pathname.startsWith("/admin-dashboard");
 
       const isProtectedRoute =        
         nextUrl.pathname.startsWith("/profile") || 
@@ -22,6 +24,12 @@ export const authConfig = {
       const isAuthRoute = 
         nextUrl.pathname.startsWith("/login") || 
         nextUrl.pathname.startsWith("/register");
+
+      // Rutas de admin: requiere estar logueado Y tener rol admin
+      if (isAdminRoute) {
+        if (isLoggedIn && auth?.user?.role === "admin") return true;
+        return Response.redirect(new URL("/", nextUrl));
+      }
 
       if (isProtectedRoute) {
         if (isLoggedIn) return true;
@@ -74,5 +82,5 @@ export const authConfig = {
       return token;
     },
   },
-  providers: [], // Providers added in auth.ts
+  providers: [],
 } satisfies NextAuthConfig;

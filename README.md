@@ -1,6 +1,6 @@
 # 🛒 INFINITY-Ecommerce
 
-A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v5)**, and **Tailwind CSS**. This application features a robust authentication system, a complete shopping flow, and integrated image management.
+A modern, full-stack e-commerce platform built with **Next.js 16**, **Auth.js (v5)**, and **Tailwind CSS**. This application features a robust authentication system, a complete shopping flow, and integrated image management.
 
 ## 🚀 Features
 
@@ -10,6 +10,9 @@ A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v
 - **💳 Checkout & Payments**: Seamless multi-step payment and order confirmation process.
 - **👤 User Profiles**: Dedicated dashboard for users to manage their info and view order history.
 - **🖼️ Image Hosting**: Integrated Cloudinary support for high-performance image handling.
+- **🛠️ Admin Dashboard**: Comprehensive interface for managing products, users, and orders.
+- **📊 Inventory Control**: Full CRUD functionality for products and categories.
+- **📋 Order Tracking**: Real-time updates and management of order fulfillment statuses.
 - **⚡ Performance First**: Leveraging Next.js 15 Server Components and Server Actions for speed and SEO.
 
 ## 🛠️ Tech Stack
@@ -69,7 +72,7 @@ A modern, full-stack e-commerce platform built with **Next.js 15**, **Auth.js (v
 - `app/`: Next.js App Router pages and layouts.
   - `(auth)/`: Authentication routes (login, register).
   - `(shop)/`: Main e-commerce routes (cart, product, payment, orders).
-  - `(profile)/`: User-specific routes.
+  - `(profile)/`: User profiles and **Admin Dashboard** management.
   - `actions/`: Server actions for handling form submissions and data mutations.
   - `api/`: API Auth.js route handlers.
 - `lib/`: Shared utility functions and database configuration.

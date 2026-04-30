@@ -18,22 +18,31 @@ async function Navbar() {
       </Link>
       <nav className="flex gap-2">
         {user ? (
-          <Link
-            className="p-2 border border-gray-400 rounded-lg font-medium bg-white hover:border-black transition duration-200"
-            href='/profile'>
-            <div className="flex items-center gap-2">
-              <div className="relative w-6 h-6 rounded-full overflow-hidden bg-gray-600">
-                <Image
-                  src={user.image || 'https://res.cloudinary.com/db0pjjqjo/image/upload/v1741484277/y9v7u9nj8r1n5vpwl9l9.png'}
-                  alt={user.username || "User"}
-                  fill
-                  className="object-cover"
-                  sizes="32px"
-                />
+          <>            
+            <Link
+              className="p-2 border border-gray-400 rounded-lg font-medium bg-white hover:border-black transition duration-200"
+              href='/profile'>
+              <div className="flex items-center gap-2">
+                <div className="relative w-6 h-6 rounded-full overflow-hidden bg-gray-600">
+                  <Image
+                    src={user.image || 'https://res.cloudinary.com/db0pjjqjo/image/upload/v1741484277/y9v7u9nj8r1n5vpwl9l9.png'}
+                    alt={user.username || "User"}
+                    fill
+                    className="object-cover"
+                    sizes="32px"
+                  />
+                </div>
+                <p className='font-black'>{user.username}</p>
               </div>
-              <p className='font-black'>{user.username}</p>
-            </div>
-          </Link>
+            </Link>
+            {user.role === "admin" && (
+              <Link
+                className="flex items-center justify-center p-2 border border-gray-400 rounded-lg font-medium bg-white hover:border-black transition duration-200"
+                href='/admin-dashboard'>
+                Dashboard
+              </Link>
+            )}
+          </>
         ) : (
           <>
             <Link
