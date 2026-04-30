@@ -39,49 +39,52 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
    ),
 };
 
-function Products({ categories, products }: Props) {
+function Main({ categories, products }: Props) {
    const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES.ALL);
+   const [searchQuery, setSearchQuery] = useState<string>('');
 
    const handleCategories = (newCategory: string) => setSelectedCategory(newCategory);
 
    const filteredProducts = products.filter((product) => {
-      if (selectedCategory === CATEGORIES.ALL) return true;
-      return product.category_name === selectedCategory;
+      const matchesCategory = selectedCategory === CATEGORIES.ALL || product.category_name === selectedCategory;
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase());      
+      return matchesCategory && matchesSearch;
    });
 
    return (
-      <div>
-         {/* CATEGORIES */}
-         <div className="flex gap-5 mb-6">
-            <button
-               onClick={() => handleCategories(CATEGORIES.ALL)}
-               className={`p-2 flex gap-2 border rounded-lg font-medium bg-white transition duration-200 
-               ${selectedCategory === CATEGORIES.ALL ? 'border-black text-black' : 'border-gray-400 text-gray_secondary hover:text-black hover:border-black'}`}
-            >
-               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g clipPath="url(#clip0_194_171)">
-                     <path
-                        fill="currentColor"
-                        d="M16.8639 8.23149L9.00012 12.9505L1.13637 8.23149C0.965804 8.12915 0.761568 8.09876 0.568594 8.147C0.375619 8.19524 0.209712 8.31817 0.107372 8.48874C0.00503132 8.6593 -0.0253599 8.86354 0.0228838 9.05652C0.0711276 9.24949 0.194054 9.4154 0.364622 9.51774L8.61462 14.4677C8.73127 14.5378 8.86479 14.5748 9.00087 14.5748C9.13696 14.5748 9.27047 14.5378 9.38712 14.4677L17.6371 9.51774C17.8077 9.4154 17.9306 9.24949 17.9789 9.05652C18.0271 8.86354 17.9967 8.86354 17.8944 8.48874C17.792 8.31817 17.6261 8.19524 17.4332 8.147C17.2402 8.09876 17.0359 8.12915 16.8654 8.23149H16.8639Z"
-                     />
-                     <path
-                        fill="currentColor"
-                        d="M16.8639 11.6571L9.00017 16.3754L1.13642 11.6571C1.05196 11.6064 0.958349 11.5729 0.860929 11.5584C0.763509 11.5439 0.664189 11.5487 0.568637 11.5726C0.473086 11.5965 0.383175 11.639 0.304038 11.6976C0.224902 11.7563 0.158089 11.8299 0.107415 11.9144C0.0567414 11.9988 0.0231987 12.0924 0.00870227 12.1899C-0.00579419 12.2873 -0.000960485 12.3866 0.0229274 12.4821C0.0711711 12.6751 0.194098 12.841 0.364665 12.9434L8.61467 17.8934C8.73131 17.9635 8.86483 18.0005 9.00092 18.0005C9.137 18.0005 9.27052 17.9635 9.38717 17.8934L17.6372 12.9434C17.8077 12.841 17.9307 12.6751 17.9789 12.4821C18.0271 12.2892 17.9968 12.0849 17.8944 11.9144C17.7921 11.7438 17.6262 11.6209 17.4332 11.5726C17.2402 11.5244 17.036 11.5548 16.8654 11.6571H16.8639Z"
-                     />
-                     <path
-                        fill="currentColor"
-                        d="M8.99993 11.0801C8.59537 11.0798 8.19847 10.9697 7.85168 10.7613L0.363681 6.26807C0.252791 6.20139 0.161039 6.10716 0.0973411 5.99453C0.0336435 5.8819 0.000167847 5.75471 0.000167847 5.62532C0.000167847 5.49592 0.0336435 5.36873 0.0973411 5.25611C0.161039 5.14348 0.252791 5.04925 0.363681 4.98257L7.85168 0.489316C8.19846 0.280988 8.59538 0.170929 8.99993 0.170929C9.40448 0.170929 9.8014 0.280988 10.1482 0.489316L17.6362 4.98257C17.7471 5.04925 17.8388 5.14348 17.9025 5.25611C17.9662 5.36873 17.9997 5.49592 17.9997 5.62532C17.9997 5.75471 17.9662 5.8819 17.9025 5.99453C17.8388 6.10716 17.7471 6.20139 17.6362 6.26807L10.1482 10.7613C9.80139 10.9697 9.40449 11.0798 8.99993 11.0801V11.0801ZM2.20793 5.62532L8.62493 9.47507C8.73827 9.54286 8.86786 9.57867 8.99993 9.57867C9.132 9.57867 9.26159 9.54286 9.37493 9.47507L15.7919 5.62532L9.37493 1.77557C9.26159 1.70777 9.132 1.67197 8.99993 1.67197C8.86786 1.67197 8.73827 1.70777 8.62493 1.77557V1.77557L2.20793 5.62532Z"
-                     />
-                  </g>
-                  <defs>
-                     <clipPath id="clip0_194_171">
-                        <rect width="18" height="18" fill="white" />
-                     </clipPath>
-                  </defs>
-               </svg>
+      <>
+         {/* CATEGORIES AND SEARCH */}
+         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-5 mb-6">
+            <div className="flex gap-5 overflow-x-auto pb-2 lg:pb-0">
+               <button
+                  onClick={() => handleCategories(CATEGORIES.ALL)}
+                  className={`p-2 flex gap-2 border rounded-lg font-medium bg-white transition duration-200 
+                  ${selectedCategory === CATEGORIES.ALL ? 'border-black text-black' : 'border-gray-400 text-gray_secondary hover:text-black hover:border-black'}`}
+               >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                     <g clipPath="url(#clip0_194_171)">
+                        <path
+                           fill="currentColor"
+                           d="M16.8639 8.23149L9.00012 12.9505L1.13637 8.23149C0.965804 8.12915 0.761568 8.09876 0.568594 8.147C0.375619 8.19524 0.209712 8.31817 0.107372 8.48874C0.00503132 8.6593 -0.0253599 8.86354 0.0228838 9.05652C0.0711276 9.24949 0.194054 9.4154 0.364622 9.51774L8.61462 14.4677C8.73127 14.5378 8.86479 14.5748 9.00087 14.5748C9.13696 14.5748 9.27047 14.5378 9.38712 14.4677L17.6371 9.51774C17.8077 9.4154 17.9306 9.24949 17.9789 9.05652C18.0271 8.86354 17.9967 8.86354 17.8944 8.48874C17.792 8.31817 17.6261 8.19524 17.4332 8.147C17.2402 8.09876 17.0359 8.12915 16.8654 8.23149H16.8639Z"
+                        />
+                        <path
+                           fill="currentColor"
+                           d="M16.8639 11.6571L9.00017 16.3754L1.13642 11.6571C1.05196 11.6064 0.958349 11.5729 0.860929 11.5584C0.763509 11.5439 0.664189 11.5487 0.568637 11.5726C0.473086 11.5965 0.383175 11.639 0.304038 11.6976C0.224902 11.7563 0.158089 11.8299 0.107415 11.9144C0.0567414 11.9988 0.0231987 12.0924 0.00870227 12.1899C-0.00579419 12.2873 -0.000960485 12.3866 0.0229274 12.4821C0.0711711 12.6751 0.194098 12.841 0.364665 12.9434L8.61467 17.8934C8.73131 17.9635 8.86483 18.0005 9.00092 18.0005C9.137 18.0005 9.27052 17.9635 9.38717 17.8934L17.6372 12.9434C17.8077 12.841 17.9307 12.6751 17.9789 12.4821C18.0271 12.2892 17.9968 12.0849 17.8944 11.9144C17.7921 11.7438 17.6262 11.6209 17.4332 11.5726C17.2402 11.5244 17.036 11.5548 16.8654 11.6571H16.8639Z"
+                        />
+                        <path
+                           fill="currentColor"
+                           d="M8.99993 11.0801C8.59537 11.0798 8.19847 10.9697 7.85168 10.7613L0.363681 6.26807C0.252791 6.20139 0.161039 6.10716 0.0973411 5.99453C0.0336435 5.8819 0.000167847 5.75471 0.000167847 5.62532C0.000167847 5.49592 0.0336435 5.36873 0.0973411 5.25611C0.161039 5.14348 0.252791 5.04925 0.363681 4.98257L7.85168 0.489316C8.19846 0.280988 8.59538 0.170929 8.99993 0.170929C9.40448 0.170929 9.8014 0.280988 10.1482 0.489316L17.6362 4.98257C17.7471 5.04925 17.8388 5.14348 17.9025 5.25611C17.9662 5.36873 17.9997 5.49592 17.9997 5.62532C17.9997 5.75471 17.9662 5.8819 17.9025 5.99453C17.8388 6.10716 17.7471 6.20139 17.6362 6.26807L10.1482 10.7613C9.80139 10.9697 9.40449 11.0798 8.99993 11.0801V11.0801ZM2.20793 5.62532L8.62493 9.47507C8.73827 9.54286 8.86786 9.57867 8.99993 9.57867C9.132 9.57867 9.26159 9.54286 9.37493 9.47507L15.7919 5.62532L9.37493 1.77557C9.26159 1.70777 9.132 1.67197 8.99993 1.67197C8.86786 1.67197 8.73827 1.70777 8.62493 1.77557V1.77557L2.20793 5.62532Z"
+                        />
+                     </g>
+                     <defs>
+                        <clipPath id="clip0_194_171">
+                           <rect width="18" height="18" fill="white" />
+                        </clipPath>
+                     </defs>
+                  </svg>
                <span>All</span>
-            </button>
-            {categories.map((category) => (
+               </button>
+               {categories.map((category) => (
                <button
                   key={category.id}
                   onClick={() => handleCategories(category.name)}
@@ -89,10 +92,22 @@ function Products({ categories, products }: Props) {
                   ${selectedCategory === category.name ? 'border-black text-black' : 'border-gray-400 text-gray_secondary hover:text-black hover:border-black'}
                   `}
                >
-                   {CATEGORY_ICONS[category.name]}
+                     {CATEGORY_ICONS[category.name]}
                   <span>{category.name}</span>
                </button>
-            ))}
+               ))}
+
+               {/* SEARCH INPUT */}
+               <div className="w-96">                  
+                  <input 
+                     type="text" 
+                     placeholder="Search products..." 
+                     value={searchQuery}
+                     onChange={(e) => setSearchQuery(e.target.value)}
+                     className="w-full py-2.5 px-3 border rounded-lg transition-colors duration-200 border-gray-400 placeholder:text-gray_secondary placeholder:font-medium focus:outline-none focus:border-black focus:placeholder:text-black"
+                  />
+               </div>
+            </div>            
          </div>
 
          {/* PRODUCTS GRID */}
@@ -109,8 +124,8 @@ function Products({ categories, products }: Props) {
                </Link>
             ))}
          </div>
-      </div>
+      </>
    )
 }
 
-export default Products;
+export default Main;

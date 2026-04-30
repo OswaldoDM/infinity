@@ -2,9 +2,9 @@ import React from "react";
 
 declare global {
 
-  type InputChange = React.ChangeEvent<HTMLInputElement>;
+  type InputChange = React.ChangeEvent<(HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) & { files?: FileList | null }>;
   type FormSubmit = React.FormEvent<HTMLFormElement>;
-
+  
   interface User {
     id: number;
     username: string;
