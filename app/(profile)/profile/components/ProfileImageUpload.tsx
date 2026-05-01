@@ -21,7 +21,7 @@ export default function ProfileImageUpload() {
 
     const result = await uploadProfileImageAction(formData);
 
-    if (result.success && result.imageUrl) {      
+    if (result.success && result.imageUrl) {          
       await update({ image: result.imageUrl }); // Forzamos a NextAuth a actualizar el token de la sesión en el cliente
       router.refresh(); // Refrescamos Next.js
     } else {

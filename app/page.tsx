@@ -1,6 +1,7 @@
 import { getCategories } from "@/lib/database/repositories/categories.repository";
 import { getProducts } from "@/lib/database/repositories/products.repository";
-import Products from "./ui/Products";
+import Main from "./ui/Main";
+
 
 async function Home() {
   const products = await getProducts();
@@ -15,7 +16,7 @@ async function Home() {
           meets visionary design.
         </p>
       </div>            
-      <Products categories={categories} products={products} />      
+      <Main categories={categories} products={products} />      
     </>
   );
 }

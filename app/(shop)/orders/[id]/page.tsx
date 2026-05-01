@@ -1,4 +1,5 @@
 import { getOrderById } from "@/lib/database/repositories/orders.repository";
+import { auth } from "@/auth";
 import Button from "@/app/ui/Button";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,7 +8,8 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function OrderDetailsPage({ params }: Props) {
+async function OrderDetailsPage({ params }: Props) {
+  const session = await auth();
   const resolvedParams = await params;
   const orderId = Number(resolvedParams.id);
 
@@ -17,7 +19,7 @@ export default async function OrderDetailsPage({ params }: Props) {
 
   const order = await getOrderById(orderId);
 
-  if (!order) {
+  if (!order || order.user_id !== Number(session?.user?.id)) {
     notFound();
   }
 
@@ -84,3 +86,5 @@ export default async function OrderDetailsPage({ params }: Props) {
     </div>
   );
 }
+
+export default OrderDetailsPage;
