@@ -17,7 +17,7 @@ A modern, full-stack e-commerce platform built with **Next.js 16**, **Auth.js (v
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Authentication**: [Auth.js v5](https://authjs.dev/)
 - **Database**: PostgreSQL (via `pg` driver)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)

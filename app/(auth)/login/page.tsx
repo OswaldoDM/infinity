@@ -26,7 +26,7 @@ function Login() {
                   type="email"
                   name="email"
                   placeholder="Email"
-                  defaultValue="johndoe@gmail.com"
+                  defaultValue="admin@gmail.com"
                   required
                />
                <Input
