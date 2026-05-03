@@ -24,6 +24,16 @@ A modern, full-stack e-commerce platform built with **Next.js 16**, **Auth.js (v
 - **Validation**: [Zod](https://zod.dev/)
 - **Media**: [Cloudinary](https://cloudinary.com/)
 
+## 🔍 Search Engine Optimization (SEO)
+
+This project implements advanced SEO strategies to ensure maximum visibility and high-quality search results:
+
+- **Dynamic Metadata**: Leveraging Next.js `generateMetadata` to provide unique, context-aware titles and descriptions for every product, improving CTR and search ranking.
+- **JSON-LD Structured Data**: Embedded Schema.org product markers enable "Rich Snippets" in Google search results, displaying price, currency, and real-time stock availability.
+- **Automated Sitemaps**: Dynamic `sitemap.ts` generation that automatically includes new products as they are added to the database.
+- **Robots.txt**: Optimized configuration to guide search engine crawlers and protect administrative routes.
+- **Social Graph Support**: Full Open Graph and Twitter Card integration for premium link previews on social platforms.
+
 ## 🏁 Getting Started
 
 ### Prerequisites

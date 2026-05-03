@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProductById } from "@/lib/database/repositories/products.repository";
 import AddToCartButton from "./components/AddToCartButton";
@@ -6,6 +7,45 @@ import BackToStoreBtn from "@/app/ui/components/BackToStoreBtn";
 
 interface Props {
    params: Promise<{ id: string }>;
+}
+
+/*
+Se genera la metadata del producto para que cada producto:
+1. Se pueda indexar correctamente en Google
+2. Se muestre correctamente en las redes sociales
+3. Se muestre correctamente en los buscadores
+
+Open Graph & Twitter: Si compartes el link del producto en WhatsApp, 
+Slack o Twitter, ahora aparecerá automáticamente la imagen del producto, 
+su nombre y su descripción en la previsualización.
+*/
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+   const resolvedParams = await params;
+   const productId = parseInt(resolvedParams.id, 10);
+   const product = await getProductById(productId);
+
+   if (!product) {
+      return {
+         title: "Product Not Found | Infinity",
+      };
+   }
+
+   return {
+      title: `${product.name} | Infinity`,
+      description: product.description || `Discover ${product.name} at Infinity. Premium quality and visionary design.`,
+      openGraph: {
+         title: `${product.name} | Infinity`,
+         description: product.description,
+         images: [{ url: product.image_url }],
+      },
+      twitter: {
+         card: "summary_large_image",
+         title: `${product.name} | Infinity`,
+         description: product.description,
+         images: [product.image_url],
+      },
+   };
 }
 
 async function ProductPage({ params }: Props) {
@@ -22,8 +62,47 @@ async function ProductPage({ params }: Props) {
       notFound();
    }
 
+   /*
+   Datos Estructurados JSON-LD:
+
+   Se ha añadido un script invisible para el usuario pero muy valioso para Google que le indica:
+
+   - Identidad: Que esta página es específicamente un producto (@type: Product).
+   - Precio y Moneda: Le decimos exactamente cuánto cuesta (USD).
+   - Stock: Le informamos si está disponible (InStock) o agotado (OutOfStock).
+   - SKU: Generamos un identificador único para que Google no lo confunda con otros.
+
+   Ahora, en lugar de ser un link azul cualquiera, Google tiene toda la información necesaria 
+   para mostrar tu producto con Rich Snippets. Esto significa que los usuarios verán el precio 
+   y si hay existencias directamente en la página de resultados de búsqueda, lo que aumenta 
+   drásticamente la probabilidad de que hagan clic.
+   
+   */
+
+   const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      image: product.image_url,
+      description: product.description,
+      sku: `product-${product.id}`,
+      offers: {
+         '@type': 'Offer',
+         url: `https://infinity-theta-gules.vercel.app/product/${product.id}`,
+         priceCurrency: 'USD',
+         price: product.price,
+         availability: product.stock_quantity > 0 
+            ? 'https://schema.org/InStock' 
+            : 'https://schema.org/OutOfStock',
+      },
+   };
+
    return (
       <div className="flex-1 flex justify-center items-center">
+         <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+         />
          <div className="max-w-6xl mx-auto">           
             <div className="flex flex-col md:flex-row">               
 
