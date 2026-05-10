@@ -6,11 +6,17 @@ import Button from "@/app/ui/Button";
 import SmallProductImg from "@/app/ui/components/SmallProductImg";
 import Link from "next/link";
 import Image from "next/image";
-import Input from "@/app/ui/Input";
 import { useRouter } from "next/navigation";
-import { createOrderAction } from "@/app/actions/order.actions";
 import AddressFormModal from "./AddressFormModal";
 import DeleteAddressModal from "./DeleteAddressModal";
+import PaymentForm from "./PaymentForm";
+import { createPaymentIntent } from "@/app/actions/stripe.actions";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+
+// Cargar Stripe fuera del componente para evitar re-crearlo en cada render.
+// loadStripe() solo hace la carga una vez y cachea el resultado.
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Props {
    products: Product[];
@@ -35,9 +41,9 @@ function Steps({products, userAddresses, userId}: Props) {
    } = useAddressManager(userAddresses);
 
    const [currentStep, setCurrentStep] = useState(1);
-   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
    const [paymentError, setPaymentError] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const [clientSecret, setClientSecret] = useState<string | null>(null);
    const router = useRouter();   
    
    const { fullCart, totalCart, clearCart } = useCart(products);
@@ -45,80 +51,44 @@ function Steps({products, userAddresses, userId}: Props) {
    const finalAddress = addresses.find(address => address.id === selectedAddressId);
 
 
-   const handlePaymentSubmit = (e: FormSubmit) => {
-      e.preventDefault();
+   // Crear PaymentIntent en Stripe al avanzar al paso de pago.
+   // El clientSecret se usa para inicializar Stripe Elements en el frontend.
+   const handleGoToPayment = async () => {
       setPaymentError('');
-      
-      const formData = new FormData(e.currentTarget);
+      setIsSubmitting(true);
 
-      if (selectedPaymentMethod === 'credit_card') {
-         const cardNumber = formData.get('cardNumber') as string;
-         const expDate = formData.get('expDate') as string;
-         const cvv = formData.get('cvv') as string;
+      const fullCartItems = fullCart.map(item => ({
+         productId: item.product!.id,
+         quantity: item.quantity,
+         priceAtPurchase: item.product!.price
+      }));
 
-         const cleanCardNumber = cardNumber.replace(/\s+/g, '');
-         const cardNumberRegex = /^\d{13,19}$/;
-         const expDateRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
-         const cvvRegex = /^\d{3,4}$/;
+      const result = await createPaymentIntent(
+         totalCart,
+         Number(userId),
+         selectedAddressId,
+         fullCartItems
+      );
 
-         if (!cardNumberRegex.test(cleanCardNumber)) {
-            setPaymentError('Invalid card number. Must be between 13 and 19 digits.');
-            return;
-         }     
-
-         if (!expDateRegex.test(expDate)) {
-            setPaymentError('Invalid expiration date. Use MM/YY format.');
-            return;
-         }
-         if (!cvvRegex.test(cvv)) {
-            setPaymentError('Invalid CVV. Must be 3 or 4 digits.');
-            return;
-         }
+      if (result.success && result.clientSecret) {
+         setClientSecret(result.clientSecret);
+         setCurrentStep(2);
       } else {
-         const email = formData.get('email') as string;
-         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-         if (!emailRegex.test(email)) {
-            setPaymentError('Invalid email address');
-            return;
-         }
+         setPaymentError(result.error || 'Failed to initialize payment.');
       }
-
-      submitOrder();
+      
+      setIsSubmitting(false);
    };
 
-   const submitOrder = async () => {
+   // Cuando el pago es exitoso, Stripe dispara el webhook que crea la orden.
+   // Redirigimos al usuario a la página de órdenes.
+   const handlePaymentSuccess = () => {
       setIsSubmitting(true);
-      try {
-         const fullCartItems = fullCart.map(item => ({
-            productId: item.product!.id,
-            quantity: item.quantity,
-            priceAtPurchase: item.product!.price
-         }));
-         
-         const result = await createOrderAction(
-            Number(userId),
-            totalCart,
-            selectedAddressId,
-            fullCartItems
-         );
-
-         if (result.success) {            
-            router.push(`/orders/${result.orderId}`);            
-            setTimeout(() => {
-               clearCart();
-            }, 3000);
-         } else {
-            console.error(result.error);
-               setPaymentError('Failed to create order: ' + result.error);
-         }
-      } catch (error) {
-         console.error(error);
-      } finally {
-         setTimeout(() => {
-            setIsSubmitting(false);
-         }, 3000);         
-      }
+      clearCart();
+      // TODO: Idealmente redirigir a la orden específica.
+      // Para eso se necesitaría que el webhook notifique al frontend
+      // del orderId creado, o buscar la orden más reciente del usuario.
+      router.push('/orders');
    };
 
 
@@ -196,14 +166,17 @@ function Steps({products, userAddresses, userId}: Props) {
                      <Button variant="secondary">Back</Button>
                   </Link>            
                   <Button 
-                     disabled={!selectedAddressId} 
-                     onClick={() => setCurrentStep(currentStep + 1)} 
+                     disabled={!selectedAddressId || isSubmitting} 
+                     onClick={handleGoToPayment} 
                      variant="primary"
                   >
-                     Next
+                     {isSubmitting ? 'Loading...' : 'Next'}
                   </Button>
                </div>
-            </div>            
+            </div>
+            {paymentError && (
+               <p className="text-red-500 text-xs mt-2 font-inter text-center">{paymentError}</p>
+            )}            
          </div>                  
       </div>
 
@@ -252,70 +225,26 @@ function Steps({products, userAddresses, userId}: Props) {
             </div>         
 
             {/* PAYMENT */}
-            <div className="min-w-[254px] max-w-[254px]">
+            <div className="min-w-[254px] max-w-[350px]">
                <h3 className="mb-3">Payment</h3>
-               <div className="flex gap-5 mb-3">
-                  <button onClick={() => setSelectedPaymentMethod('credit_card')} className={`${selectedPaymentMethod === 'credit_card' ? 'border-b border-black opacity-100' : 'opacity-50'} pb-1 font-inter font-medium`}>Credit Card</button>               
-                  <button onClick={() => setSelectedPaymentMethod('paypal')} className={`${selectedPaymentMethod === 'paypal' ? 'border-b border-black opacity-100' : 'opacity-50'} pb-1 font-inter font-medium`}>PayPal</button>               
-               </div>
-               {selectedPaymentMethod === 'credit_card' && (
-               <div className="flex flex-col gap-3">
-                  <div className="relative w-[254px] h-[142px]">
-                     <Image src="/creditcard.png" alt="Credit Card" className="object-cover" fill sizes="254px" />                     
-                  </div>
-                  <form onSubmit={handlePaymentSubmit}>
-                     <div className="flex flex-col gap-2">
-                        <div>
-                           <p className="font-inter text-[10px] text-black_secondary">Card number</p>
-                           <Input defaultValue='4085 9536 8475 9530' type="text" name="cardNumber" placeholder="0000 0000 0000 0000" required/>
-                        </div>
-                        <div className="flex gap-2">
-                           <div className="w-1/2">
-                              <p className="font-inter text-[10px] text-black_secondary">Exp. Date</p>
-                              <Input defaultValue='12/26' type="text" name="expDate" placeholder="MM/YY" required/>
-                           </div>
-                           <div className="w-1/2">
-                              <p className="font-inter text-[10px] text-black_secondary">CVV</p>
-                              <Input defaultValue='422' type="text" name="cvv" placeholder="123" required maxLength={4}/>
-                           </div>
-                        </div>  
-                        {paymentError && (
-                           <p className="text-red-500 text-xs mt-1 font-inter">{paymentError}</p>
-                        )}
-                        <div className="flex gap-2 mt-3 w-full">
-                           <span className="w-1/2">
-                              <Button type="button" disabled={isSubmitting} onClick={() => setCurrentStep(currentStep - 1)} variant="secondary">Back</Button>
-                           </span>
-                           <span className="w-1/2">
-                              <Button type="submit" disabled={isSubmitting} variant="primary">
-                                 Pay
-                              </Button>
-                           </span>
-                        </div>
-                     </div>                
-                  </form>
-               </div>
+               {clientSecret && (
+                  <Elements stripe={stripePromise} options={{
+                     clientSecret,
+                     appearance: {
+                        theme: 'stripe',
+                        variables: {
+                           colorPrimary: '#000000',
+                           borderRadius: '12px',
+                           fontFamily: 'Inter, system-ui, sans-serif',
+                        },
+                     },
+                  }}>
+                     <PaymentForm 
+                        onSuccess={handlePaymentSuccess}
+                        onBack={() => setCurrentStep(1)}
+                     />
+                  </Elements>
                )}
-               {selectedPaymentMethod === 'paypal' && (
-               <div className="flex flex-col gap-3">
-                  <div className="flex justify-center items-center w-full h-[142px] bg-white rounded-xl">
-                     <Image src="/pp.png" alt="PayPal" width={160} height={142} />                     
-                  </div>
-                  <form onSubmit={handlePaymentSubmit}>
-                     <p className="font-inter text-[10px] text-black_secondary">Email</p>
-                     <Input defaultValue='userpaypal@gmail.com' type="email" name="email" required/>
-                     {paymentError && (
-                        <p className="text-red-500 text-xs mt-1 font-inter">{paymentError}</p>
-                     )}
-                     <div className="flex gap-2 mt-3">
-                     <Button type="button" disabled={isSubmitting} onClick={() => setCurrentStep(currentStep - 1)} variant="secondary">Back</Button>
-                     <Button type="submit" disabled={isSubmitting} variant="primary">
-                        Pay
-                     </Button>
-                     </div>
-                  </form>              
-               </div>
-               )}            
             </div>            
       </div>
       )}                  

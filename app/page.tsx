@@ -2,7 +2,6 @@ import { getCategories } from "@/lib/database/repositories/categories.repository
 import { getProducts } from "@/lib/database/repositories/products.repository";
 import Main from "./ui/Main";
 
-
 async function Home() {
   const products = await getProducts();
   const categories = await getCategories();
