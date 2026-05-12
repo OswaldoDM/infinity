@@ -5,7 +5,6 @@ import { useState } from "react"
 import Button from "@/app/ui/Button";
 import SmallProductImg from "@/app/ui/components/SmallProductImg";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import AddressFormModal from "./AddressFormModal";
 import DeleteAddressModal from "./DeleteAddressModal";
@@ -43,6 +42,7 @@ function Steps({products, userAddresses, userId}: Props) {
    const [currentStep, setCurrentStep] = useState(1);
    const [paymentError, setPaymentError] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const [isGoingToPayment, setIsGoingToPayment] = useState(false);
    const [clientSecret, setClientSecret] = useState<string | null>(null);
    const router = useRouter();   
    
@@ -55,14 +55,14 @@ function Steps({products, userAddresses, userId}: Props) {
    // El clientSecret se usa para inicializar Stripe Elements en el frontend.
    const handleGoToPayment = async () => {
       setPaymentError('');
-      setIsSubmitting(true);
+      setIsGoingToPayment(true);
 
       const fullCartItems = fullCart.map(item => ({
          productId: item.product!.id,
          quantity: item.quantity,
          priceAtPurchase: item.product!.price
       }));
-
+      
       const result = await createPaymentIntent(
          totalCart,
          Number(userId),
@@ -77,7 +77,7 @@ function Steps({products, userAddresses, userId}: Props) {
          setPaymentError(result.error || 'Failed to initialize payment.');
       }
       
-      setIsSubmitting(false);
+      setIsGoingToPayment(false);
    };
 
    // Cuando el pago es exitoso, Stripe dispara el webhook que crea la orden.
@@ -166,17 +166,19 @@ function Steps({products, userAddresses, userId}: Props) {
                      <Button variant="secondary">Back</Button>
                   </Link>            
                   <Button 
-                     disabled={!selectedAddressId || isSubmitting} 
+                     disabled={!selectedAddressId || isGoingToPayment} 
                      onClick={handleGoToPayment} 
                      variant="primary"
                   >
-                     {isSubmitting ? 'Loading...' : 'Next'}
+                     {isGoingToPayment ? (
+                        <div className="animate-spin rounded-full w-5 h-5 border-b-4 border-white"></div>
+                     ) : "Next"}
                   </Button>
                </div>
             </div>
-            {paymentError && (
+            {paymentError ? (
                <p className="text-red-500 text-xs mt-2 font-inter text-center">{paymentError}</p>
-            )}            
+            ):null}            
          </div>                  
       </div>
 
@@ -225,7 +227,7 @@ function Steps({products, userAddresses, userId}: Props) {
             </div>         
 
             {/* PAYMENT */}
-            <div className="min-w-[254px] max-w-[350px]">
+            <div className="min-w-[360px] ">
                <h3 className="mb-3">Payment</h3>
                {clientSecret && (
                   <Elements stripe={stripePromise} options={{

@@ -6,7 +6,7 @@ export async function createOrder(
   shippingAddressId:number | null, 
   items:fullCartItem[],
   stripePaymentIntentId?: string,  // ID del PaymentIntent de Stripe (para vincular la orden con el pago)
-  paymentStatus: string = 'pending'  // Estado del pago: 'pending', 'paid', 'failed'
+  paymentStatus: string = 'pending' 
 ): Promise<number> {
 
   // Atomicidad y el uso de Transacciones
@@ -134,11 +134,25 @@ export async function getOrderByUserID(userId: number): Promise<Order[]> {
   return result.rows;
 }
 
+/* 
+  - Buscar una orden por su stripe_payment_intent_id.
+  - Se usa en el webhook para verificar idempotencia (evitar crear órdenes duplicadas
+    si Stripe envía el mismo evento más de una vez).
+*/
+export async function getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | null> {
+  const query = BASE_ORDER_QUERY + `
+    WHERE o.stripe_payment_intent_id = $1
+    GROUP BY o.id, a.id;
+  `;
+  const result = await pool.query(query, [paymentIntentId]);
+  return result.rows[0] || null;
+}
 
-/**
+/*
 
-Porque necesitamos la id que tiene cada producto en la tabla order_items
-en el objeto items? 
+Porque necesitamos la id que tiene cada producto en 
+order_items en el objeto items que creamos en la 
+BASE_ORDER_QUERY? 
 
 Para devoluciones, quejas o cancelaciones parciales
 
@@ -158,19 +172,4 @@ json_build_object(
         'id', oi.id, -> ESTA DE ACA        
       )
 
-**/
-
-
-// ─── Funciones auxiliares para Stripe ──────────────────────────
-
-// Buscar una orden por su stripe_payment_intent_id.
-// Se usa en el webhook para verificar idempotencia (evitar crear órdenes duplicadas
-// si Stripe envía el mismo evento más de una vez).
-export async function getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | null> {
-  const query = BASE_ORDER_QUERY + `
-    WHERE o.stripe_payment_intent_id = $1
-    GROUP BY o.id, a.id;
-  `;
-  const result = await pool.query(query, [paymentIntentId]);
-  return result.rows[0] || null;
-}
+*/

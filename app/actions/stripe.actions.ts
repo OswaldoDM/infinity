@@ -1,15 +1,15 @@
 'use server';
-
 import stripe from '@/lib/stripe';
 
-/**
- * Crea un PaymentIntent en Stripe con el monto total de la orden.
- * 
- * El PaymentIntent es el objeto central de Stripe para manejar pagos.
- * Se crea en el servidor para nunca exponer la STRIPE_SECRET_KEY al cliente.
- * 
- * Devuelve el clientSecret que el frontend necesita para confirmar el pago
- * usando Stripe Elements.
+/*
+ - Crea un PaymentIntent en Stripe con el monto total de la orden.
+  
+ - El PaymentIntent es el objeto central de Stripe para manejar pagos.
+
+ - Se crea en el servidor para nunca exponer la STRIPE_SECRET_KEY al cliente.
+  
+ - Obtiene y retorna el clientSecret que el frontend necesita para confirmar
+    el pago usando Stripe Elements.
  */
 export async function createPaymentIntent(
   amount: number,
@@ -21,6 +21,7 @@ export async function createPaymentIntent(
     // Stripe maneja montos en centavos (ej: $25.00 = 2500)
     const amountInCents = Math.round(amount * 100);
 
+    // Crear PaymentIntent en Stripe
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency: 'usd',
@@ -56,13 +57,4 @@ export async function createPaymentIntent(
 
 
 
-// La confirmación del pago se maneja a través del webhook en:
-// app/api/webhooks/stripe/route.ts
-//
-// Flujo completo:
-// 1. Este Server Action crea el PaymentIntent y devuelve el clientSecret al frontend
-// 2. El frontend muestra el formulario de pago con Stripe Elements
-// 3. El usuario completa el pago → Stripe procesa el cobro
-// 4. Stripe envía un evento payment_intent.succeeded al webhook
-// 5. El webhook verifica idempotencia, extrae userId/addressId/cartItems del metadata,
-//    y crea la orden en la base de datos con el stripe_payment_intent_id y payment_status='paid'
+

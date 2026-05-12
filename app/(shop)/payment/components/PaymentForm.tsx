@@ -1,5 +1,4 @@
 'use client';
-
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
 import { useState } from 'react';
 import Button from '@/app/ui/Button';
@@ -9,16 +8,17 @@ interface Props {
   onBack: () => void;
 }
 
-/**
- * Formulario de pago con Stripe Elements.
- * 
- * Usa el componente <PaymentElement /> que es un formulario pre-construido
- * por Stripe que acepta tarjetas de crédito, débito, y otros métodos de pago
- * según la configuración de automatic_payment_methods en el PaymentIntent.
- * 
- * Este componente DEBE estar envuelto en un <Elements> provider que le 
- * pase el clientSecret del PaymentIntent.
+/*
+ - Formulario de pago con Stripe Elements.
+  
+ - Usa el componente <PaymentElement /> que es un formulario pre-construido
+   por Stripe que acepta tarjetas de crédito, débito, y otros métodos de pago
+   según la configuración de automatic_payment_methods en el PaymentIntent.
+  
+ - Este componente DEBE estar envuelto en un <Elements> provider que le 
+   pase el clientSecret del PaymentIntent.
  */
+
 function PaymentForm({ onSuccess, onBack }: Props) {
   const stripe = useStripe();
   const elements = useElements();
@@ -35,10 +35,13 @@ function PaymentForm({ onSuccess, onBack }: Props) {
     setIsProcessing(true);
     setPaymentError('');
 
-    // confirmPayment() envía los datos de la tarjeta directamente a Stripe
-    // (nunca pasan por nuestro servidor). Stripe procesa el cobro y devuelve
-    // el resultado. Si el pago es exitoso, Stripe dispara el webhook 
-    // payment_intent.succeeded, que es donde se crea la orden en la DB.
+    /* 
+     - confirmPayment() envía los datos de la tarjeta directamente a Stripe
+       (nunca pasan por nuestro servidor). 
+     - Stripe procesa el cobro y devuelve el resultado. 
+     - Si el pago es exitoso, Stripe dispara el webhook 
+       payment_intent.succeeded, que es donde se crea la orden en la DB.
+    */
     const { error } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required', // Solo redirige si el método de pago lo requiere (ej: 3D Secure)
@@ -62,9 +65,7 @@ function PaymentForm({ onSuccess, onBack }: Props) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* PaymentElement renderiza el formulario completo de Stripe.
-          Acepta tarjetas y otros métodos de pago automáticamente.
-          Los datos de la tarjeta nunca tocan nuestro servidor. */}
+      {/* PaymentElement renderiza el formulario completo de Stripe. */}      
       <PaymentElement />
 
       {paymentError && (
