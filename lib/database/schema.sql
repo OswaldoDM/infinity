@@ -80,7 +80,7 @@ CREATE TABLE orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índice para user_id y status en órdenes
+-- Índice para user_id , status y stripe_payment_intent_id en órdenes
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_stripe_pi ON orders(stripe_payment_intent_id);
