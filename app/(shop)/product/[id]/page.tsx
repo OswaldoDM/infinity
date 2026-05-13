@@ -104,15 +104,15 @@ async function ProductPage({ params }: Props) {
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
          />
          <div className="max-w-6xl mx-auto">           
-            <div className="flex flex-col md:flex-row">               
+            <div className="flex flex-col lg:flex-row">               
 
                {/* Image Section */}               
-               <div className="md:w-[50%] flex justify-center items-center">
+               <div className="lg:w-[50%] flex justify-center items-center">
                   <ProductImage src={product.image_url} alt={product.name} />
                </div>
 
                {/* Content Section */}
-               <div className="md:w-[50%] flex flex-col justify-center">
+               <div className="lg:w-[50%] flex flex-col justify-center">
 
                   <div className="inline-block px-3 py-1 rounded-full bg-white text-xs font-bold uppercase tracking-widest mb-6 w-max shadow-sm">
                      {product.category_name || "Uncategorized"}

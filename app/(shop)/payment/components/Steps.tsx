@@ -5,12 +5,18 @@ import { useState } from "react"
 import Button from "@/app/ui/Button";
 import SmallProductImg from "@/app/ui/components/SmallProductImg";
 import Link from "next/link";
-import Image from "next/image";
-import Input from "@/app/ui/Input";
 import { useRouter } from "next/navigation";
-import { createOrderAction } from "@/app/actions/order.actions";
 import AddressFormModal from "./AddressFormModal";
 import DeleteAddressModal from "./DeleteAddressModal";
+import PaymentForm from "./PaymentForm";
+import { createPaymentIntent, getOrderIdByPaymentIntent } from "@/app/actions/stripe.actions";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import Image from "next/image";
+
+// Cargar Stripe fuera del componente para evitar re-crearlo en cada render.
+// loadStripe() solo hace la carga una vez y cachea el resultado.
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface Props {
    products: Product[];
@@ -35,9 +41,10 @@ function Steps({products, userAddresses, userId}: Props) {
    } = useAddressManager(userAddresses);
 
    const [currentStep, setCurrentStep] = useState(1);
-   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'credit_card' | 'paypal'>('credit_card');
    const [paymentError, setPaymentError] = useState('');
    const [isSubmitting, setIsSubmitting] = useState(false);
+   const [isGoingToPayment, setIsGoingToPayment] = useState(false);
+   const [clientSecret, setClientSecret] = useState<string | null>(null);
    const router = useRouter();   
    
    const { fullCart, totalCart, clearCart } = useCart(products);
@@ -45,80 +52,65 @@ function Steps({products, userAddresses, userId}: Props) {
    const finalAddress = addresses.find(address => address.id === selectedAddressId);
 
 
-   const handlePaymentSubmit = (e: FormSubmit) => {
-      e.preventDefault();
+   // Crear PaymentIntent en Stripe al avanzar al paso de pago.
+   // El clientSecret se usa para inicializar Stripe Elements en el frontend.
+   const handleGoToPayment = async () => {
       setPaymentError('');
+      setIsGoingToPayment(true);
+
+      const fullCartItems = fullCart.map(item => ({
+         productId: item.product!.id,
+         quantity: item.quantity,
+         priceAtPurchase: item.product!.price
+      }));
       
-      const formData = new FormData(e.currentTarget);
+      const result = await createPaymentIntent(
+         totalCart,
+         Number(userId),
+         selectedAddressId,
+         fullCartItems
+      );
 
-      if (selectedPaymentMethod === 'credit_card') {
-         const cardNumber = formData.get('cardNumber') as string;
-         const expDate = formData.get('expDate') as string;
-         const cvv = formData.get('cvv') as string;
-
-         const cleanCardNumber = cardNumber.replace(/\s+/g, '');
-         const cardNumberRegex = /^\d{13,19}$/;
-         const expDateRegex = /^(0[1-9]|1[0-2])\/\d{2}$/;
-         const cvvRegex = /^\d{3,4}$/;
-
-         if (!cardNumberRegex.test(cleanCardNumber)) {
-            setPaymentError('Invalid card number. Must be between 13 and 19 digits.');
-            return;
-         }     
-
-         if (!expDateRegex.test(expDate)) {
-            setPaymentError('Invalid expiration date. Use MM/YY format.');
-            return;
-         }
-         if (!cvvRegex.test(cvv)) {
-            setPaymentError('Invalid CVV. Must be 3 or 4 digits.');
-            return;
-         }
+      if (result.success && result.clientSecret) {
+         setClientSecret(result.clientSecret);
+         setCurrentStep(2);
       } else {
-         const email = formData.get('email') as string;
-         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-         if (!emailRegex.test(email)) {
-            setPaymentError('Invalid email address');
-            return;
-         }
+         setPaymentError(result.error || 'Failed to initialize payment.');
       }
-
-      submitOrder();
+      
+      setIsGoingToPayment(false);
    };
 
-   const submitOrder = async () => {
+   // Cuando el pago es exitoso, hacer polling hasta que el webhook cree la orden.
+   // Luego redirigir a la página de esa orden específica.
+   const handlePaymentSuccess = async (paymentIntentId: string) => {
       setIsSubmitting(true);
-      try {
-         const fullCartItems = fullCart.map(item => ({
-            productId: item.product!.id,
-            quantity: item.quantity,
-            priceAtPurchase: item.product!.price
-         }));
-         
-         const result = await createOrderAction(
-            Number(userId),
-            totalCart,
-            selectedAddressId,
-            fullCartItems
-         );
+      clearCart();
 
-         if (result.success) {            
-            router.push(`/orders/${result.orderId}`);            
-            setTimeout(() => {
-               clearCart();
-            }, 3000);
-         } else {
-            console.error(result.error);
-               setPaymentError('Failed to create order: ' + result.error);
+      // Polling: intentar cada 1.5 segundos, máximo 10 intentos (15 segundos).
+      // El webhook normalmente crea la orden en menos de 2 segundos.
+      const MAX_ATTEMPTS = 10;
+      const INTERVAL_MS = 1500;
+
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+         /*
+         Esta promesa es una pausa de 1.5 segundos entre cada intento. 
+         Sin ella, el loop haría las 10 consultas a la base de datos de 
+         inmediato, antes de que el webhook tenga tiempo de crear la orden.
+         */
+         await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
+
+         const result = await getOrderIdByPaymentIntent(paymentIntentId);
+         if (result.success && result.orderId) {
+            router.push(`/orders/${result.orderId}`);
+            return;
          }
-      } catch (error) {
-         console.error(error);
-      } finally {
-         setTimeout(() => {
-            setIsSubmitting(false);
-         }, 3000);         
       }
+
+      // Fallback: si después de 15 segundos no se encuentra la orden,
+      // redirigir a la home page.
+      // TODO: mostrar un mensaje de error al usuario en vez de redirigirlo.
+      router.push('/');
    };
 
 
@@ -196,14 +188,19 @@ function Steps({products, userAddresses, userId}: Props) {
                      <Button variant="secondary">Back</Button>
                   </Link>            
                   <Button 
-                     disabled={!selectedAddressId} 
-                     onClick={() => setCurrentStep(currentStep + 1)} 
+                     disabled={!selectedAddressId || isGoingToPayment} 
+                     onClick={handleGoToPayment} 
                      variant="primary"
                   >
-                     Next
+                     {isGoingToPayment ? (
+                        <div className="animate-spin rounded-full w-5 h-5 border-b-4 border-white"></div>
+                     ) : "Next"}
                   </Button>
                </div>
-            </div>            
+            </div>
+            {paymentError ? (
+               <p className="text-red-500 text-xs mt-2 font-inter text-center">{paymentError}</p>
+            ):null}            
          </div>                  
       </div>
 
@@ -212,111 +209,82 @@ function Steps({products, userAddresses, userId}: Props) {
             <div className='animate-spin rounded-full h-32 w-32 border-b-4 border-gray-900'></div>      
          </div>
          ) : (
-         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex justify-center gap-6 opacity-100' : 'hidden opacity-0'}`}>                       
+         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex flex-col-reverse lg:flex-row justify-center items-start gap-8 lg:gap-12 opacity-100' : 'hidden opacity-0'}`}>                       
             
-            {/* SUMMARY */}
-            <div className="">
-               <h3 className="mb-3">Summary</h3>
-               <div className='bg-white rounded-xl py-5 px-6'>
-                  <div className={`max-h-[220px] mb-6 ${fullCart.length > 3 ? 'overflow-y-scroll' : ''}`}>
-                     {fullCart.map((item) => (
-                     <div key={item.product?.id} className={`flex items-center gap-2 mb-6 ${fullCart.length > 3 ? 'mr-3' : ''}`}>
-                        <SmallProductImg 
-                           src={item.product?.image_url} 
-                           alt={item.product?.name} 
-                           width='w-[54px]' 
-                           height='h-[54px]' 
-                           sizes="54px"
+            {/* PAYMENT */}
+            <div className="w-full lg:w-1/2 max-w-md">               
+               <h3 className="mb-4 text-xl font-bold tracking-tight">Payment Details</h3>               
+               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">                  
+                  {clientSecret && (
+                     <Elements stripe={stripePromise} options={{
+                        clientSecret,
+                        appearance: {
+                           theme: 'stripe',
+                           variables: {
+                              colorPrimary: '#000000',
+                              borderRadius: '8px',
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              colorBackground: '#ffffff',
+                              colorText: '#1f2937',
+                           },
+                        },
+                     }}>
+                        <PaymentForm 
+                           onSuccess={handlePaymentSuccess}
+                           onBack={() => setCurrentStep(1)}
                         />
-                        <div className=" min-w-[200px]">
-                           <p className="font-semibold text-base">{item.product?.name}</p>
+                     </Elements>
+                  )}
+               </div>
+            </div>            
+
+            {/* SUMMARY */}
+            <div className="w-full lg:w-1/2 max-w-md">
+               <h3 className="mb-4 text-xl font-bold tracking-tight">Order Summary</h3>
+               <div className='bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8'>
+                  <div className={`max-h-[280px] mb-6 ${fullCart.length > 3 ? 'overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
+                     {fullCart.map((item) => (
+                     <div key={item.product?.id} className={`flex items-start gap-4 mb-5`}>
+                        <div className="bg-gray-50 rounded-lg p-2 shrink-0 border border-gray-100">
+                           <SmallProductImg 
+                              src={item.product?.image_url} 
+                              alt={item.product?.name} 
+                              width='w-[60px]' 
+                              height='h-[60px]' 
+                              sizes="60px"
+                           />
+                        </div>
+                        <div className="flex-1 pt-1">
+                           <p className="font-semibold text-sm line-clamp-2">{item.product?.name}</p>
                            <p className="text-xs text-gray-500 mt-1 font-inter">Qty: {item.quantity}</p>
                         </div>                     
-                        <p className="font-semibold">${((item.product?.price || 0) * item.quantity)}</p>                     
+                        <p className="font-bold text-sm pt-1">${((item.product?.price || 0) * item.quantity)}</p>                     
                      </div>
                      ))}
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipping Address</p>                  
-                     <p className="max-w-[200px] text-gray-600">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
+                  
+                  <div className="pt-5 border-t border-gray-100 font-inter mb-4">
+                     <p className="font-semibold text-black mb-1 text-sm">Shipping Address</p>                  
+                     <p className="text-sm text-gray-500 leading-relaxed">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipment Method</p>
-                     <p className="text-gray-600">Free Shipping</p>
+                  
+                  <div className="pt-4 border-t border-gray-100 font-inter mb-6">
+                     <div className="flex justify-between items-center text-sm mb-3">
+                        <p className="text-gray-500">Subtotal</p>
+                        <p className="font-semibold">${totalCart}</p>
+                     </div>
+                     <div className="flex justify-between items-center text-sm mb-2">
+                        <p className="text-gray-500">Shipping</p>
+                        <p className="font-semibold text-emerald-600">Free</p>
+                     </div>
                   </div>
-                  <div className="font-inter font-bold flex justify-between mt-6">
-                     <p>Total</p>
-                     <p>${totalCart}</p>
+                  
+                  <div className="pt-5 border-t border-gray-200 font-inter font-black flex justify-between items-center">
+                     <p className="text-lg">Total</p>
+                     <p className="text-xl">${totalCart}</p>
                   </div>
                </div>            
             </div>         
-
-            {/* PAYMENT */}
-            <div className="min-w-[254px] max-w-[254px]">
-               <h3 className="mb-3">Payment</h3>
-               <div className="flex gap-5 mb-3">
-                  <button onClick={() => setSelectedPaymentMethod('credit_card')} className={`${selectedPaymentMethod === 'credit_card' ? 'border-b border-black opacity-100' : 'opacity-50'} pb-1 font-inter font-medium`}>Credit Card</button>               
-                  <button onClick={() => setSelectedPaymentMethod('paypal')} className={`${selectedPaymentMethod === 'paypal' ? 'border-b border-black opacity-100' : 'opacity-50'} pb-1 font-inter font-medium`}>PayPal</button>               
-               </div>
-               {selectedPaymentMethod === 'credit_card' && (
-               <div className="flex flex-col gap-3">
-                  <div className="relative w-[254px] h-[142px]">
-                     <Image src="/creditcard.png" alt="Credit Card" className="object-cover" fill sizes="254px" />                     
-                  </div>
-                  <form onSubmit={handlePaymentSubmit}>
-                     <div className="flex flex-col gap-2">
-                        <div>
-                           <p className="font-inter text-[10px] text-black_secondary">Card number</p>
-                           <Input defaultValue='4085 9536 8475 9530' type="text" name="cardNumber" placeholder="0000 0000 0000 0000" required/>
-                        </div>
-                        <div className="flex gap-2">
-                           <div className="w-1/2">
-                              <p className="font-inter text-[10px] text-black_secondary">Exp. Date</p>
-                              <Input defaultValue='12/26' type="text" name="expDate" placeholder="MM/YY" required/>
-                           </div>
-                           <div className="w-1/2">
-                              <p className="font-inter text-[10px] text-black_secondary">CVV</p>
-                              <Input defaultValue='422' type="text" name="cvv" placeholder="123" required maxLength={4}/>
-                           </div>
-                        </div>  
-                        {paymentError && (
-                           <p className="text-red-500 text-xs mt-1 font-inter">{paymentError}</p>
-                        )}
-                        <div className="flex gap-2 mt-3 w-full">
-                           <span className="w-1/2">
-                              <Button type="button" disabled={isSubmitting} onClick={() => setCurrentStep(currentStep - 1)} variant="secondary">Back</Button>
-                           </span>
-                           <span className="w-1/2">
-                              <Button type="submit" disabled={isSubmitting} variant="primary">
-                                 Pay
-                              </Button>
-                           </span>
-                        </div>
-                     </div>                
-                  </form>
-               </div>
-               )}
-               {selectedPaymentMethod === 'paypal' && (
-               <div className="flex flex-col gap-3">
-                  <div className="flex justify-center items-center w-full h-[142px] bg-white rounded-xl">
-                     <Image src="/pp.png" alt="PayPal" width={160} height={142} />                     
-                  </div>
-                  <form onSubmit={handlePaymentSubmit}>
-                     <p className="font-inter text-[10px] text-black_secondary">Email</p>
-                     <Input defaultValue='userpaypal@gmail.com' type="email" name="email" required/>
-                     {paymentError && (
-                        <p className="text-red-500 text-xs mt-1 font-inter">{paymentError}</p>
-                     )}
-                     <div className="flex gap-2 mt-3">
-                     <Button type="button" disabled={isSubmitting} onClick={() => setCurrentStep(currentStep - 1)} variant="secondary">Back</Button>
-                     <Button type="submit" disabled={isSubmitting} variant="primary">
-                        Pay
-                     </Button>
-                     </div>
-                  </form>              
-               </div>
-               )}            
-            </div>            
       </div>
       )}                  
       <AddressFormModal

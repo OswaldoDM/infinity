@@ -75,12 +75,15 @@ CREATE TABLE orders (
     status order_status NOT NULL DEFAULT 'pending',
     total_amount DECIMAL(10, 2) NOT NULL CHECK (total_amount >= 0),
     shipping_address_id INTEGER REFERENCES addresses(id) ON DELETE SET NULL,  -- FK opcional a direcciones
+    stripe_payment_intent_id VARCHAR(255) UNIQUE,  -- Vincula la orden con el pago en Stripe (también sirve como clave de idempotencia)
+    payment_status VARCHAR(50) DEFAULT 'pending',  -- Estado del pago: 'pending', 'paid', 'failed'
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índice para user_id y status en órdenes
+-- Índice para user_id , status y stripe_payment_intent_id en órdenes
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_stripe_pi ON orders(stripe_payment_intent_id);
 
 
 -- Tabla: Items de Órden

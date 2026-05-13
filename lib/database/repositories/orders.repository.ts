@@ -4,7 +4,10 @@ export async function createOrder(
   userId:number, 
   totalAmount:number, 
   shippingAddressId:number | null, 
-  items:fullCartItem[]): Promise<number> {
+  items:fullCartItem[],
+  stripePaymentIntentId?: string,  // ID del PaymentIntent de Stripe (para vincular la orden con el pago)
+  paymentStatus: string = 'pending' 
+): Promise<number> {
 
   // Atomicidad y el uso de Transacciones
   // La atomicidad es la propiedad de una transacción que garantiza que todas las operaciones 
@@ -22,14 +25,16 @@ export async function createOrder(
 
     // 3. Primer paso: Insertar la orden para generar un ID.
     const orderQuery = `
-      INSERT INTO orders (user_id, total_amount, shipping_address_id)
-      VALUES ($1, $2, $3)
+      INSERT INTO orders (user_id, total_amount, shipping_address_id, stripe_payment_intent_id, payment_status)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING id;
     `;
     const orderResult = await client.query(orderQuery, [
       userId,
       totalAmount,
       shippingAddressId,
+      stripePaymentIntentId || null,
+      paymentStatus,
     ]);
     const orderId = orderResult.rows[0].id;
 
@@ -92,6 +97,7 @@ Como funciona el BASE_ORDER_QUERY ?
 const BASE_ORDER_QUERY = `
   SELECT 
     o.id, o.user_id, o.order_date, o.status, o.total_amount, o.shipping_address_id,
+    o.stripe_payment_intent_id, o.payment_status,
     a.street, a.city, a.state, a.postal_code, a.country, a.shortname, a.phone as address_phone,
     json_agg(
       json_build_object(
@@ -128,11 +134,27 @@ export async function getOrderByUserID(userId: number): Promise<Order[]> {
   return result.rows;
 }
 
+/* 
+  - Buscar una orden por su stripe_payment_intent_id.
+  - Se usa en el webhook para verificar idempotencia (evitar crear órdenes duplicadas
+    si Stripe envía el mismo evento más de una vez).  
+  - Tambien se usa en stripe.actions para obtener la orderId del pago mas reciente y 
+    hacer polling y verificar que la orden se ha creado en Steps.tsx.
+*/
+export async function getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | null> {
+  const query = BASE_ORDER_QUERY + `
+    WHERE o.stripe_payment_intent_id = $1
+    GROUP BY o.id, a.id;
+  `;
+  const result = await pool.query(query, [paymentIntentId]);
+  return result.rows[0] || null;
+}
 
-/**
+/*
 
-Porque necesitamos la id que tiene cada producto en la tabla order_items
-en el objeto items? 
+Porque necesitamos la id que tiene cada producto en 
+la tabla order_items en el objeto items que creamos en la 
+BASE_ORDER_QUERY? 
 
 Para devoluciones, quejas o cancelaciones parciales
 
@@ -152,4 +174,4 @@ json_build_object(
         'id', oi.id, -> ESTA DE ACA        
       )
 
-**/
+*/

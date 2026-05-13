@@ -108,6 +108,9 @@ declare global {
     shortname: string;
     address_phone: string;
     items: OrderItem[];
+    // Campos de Stripe
+    stripe_payment_intent_id?: string;
+    payment_status?: "pending" | "paid" | "failed";
   }
 }
 

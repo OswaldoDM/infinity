@@ -58,7 +58,7 @@ function Main({ categories, products }: Props) {
             <div className="flex gap-5 overflow-x-auto pb-2 lg:pb-0">
                <button
                   onClick={() => handleCategories(CATEGORIES.ALL)}
-                  className={`p-2 flex gap-2 border rounded-lg font-medium bg-white transition duration-200 
+                  className={`hidden md:flex gap-2 p-2 border rounded-lg font-medium bg-white transition duration-200 
                   ${selectedCategory === CATEGORIES.ALL ? 'border-black text-black' : 'border-gray-400 text-gray_secondary hover:text-black hover:border-black'}`}
                >
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -82,13 +82,13 @@ function Main({ categories, products }: Props) {
                         </clipPath>
                      </defs>
                   </svg>
-               <span>All</span>
+                  <span>All</span>
                </button>
                {categories.map((category) => (
                <button
                   key={category.id}
                   onClick={() => handleCategories(category.name)}
-                  className={`py-2 px-3 flex items-center gap-2 border rounded-lg font-medium bg-white transition duration-200 
+                  className={`hidden md:flex items-center gap-2 py-2 px-3 border rounded-lg font-medium bg-white transition duration-200 
                   ${selectedCategory === category.name ? 'border-black text-black' : 'border-gray-400 text-gray_secondary hover:text-black hover:border-black'}
                   `}
                >
@@ -98,7 +98,7 @@ function Main({ categories, products }: Props) {
                ))}
 
                {/* SEARCH INPUT */}
-               <div className="w-96">                  
+               <div className="w-full px-4 md:px-0 md:w-96">                  
                   <input 
                      type="text" 
                      placeholder="Search products..." 
@@ -111,7 +111,7 @@ function Main({ categories, products }: Props) {
          </div>
 
          {/* PRODUCTS GRID */}
-         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-7 gap-y-5 2xl:gap-y-7">
+         <div className="px-3 sm:px-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-x-7 gap-y-5 2xl:gap-y-7">
             {filteredProducts.map((product) => (
                <Link
                   href={`/product/${product.id}`}
