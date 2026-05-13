@@ -27,7 +27,7 @@ export default function RootLayout({children}:Readonly<{ children: React.ReactNo
   return (
     <html lang="en">
       <body className={`${urbanist.className} ${inter.variable} antialiased`}>
-        <main className='min-h-screen flex bg-gray-200 text-sm 2xl:text-base'>
+        <main className='min-h-screen flex bg-gray-50 text-sm 2xl:text-base'>
           <section className='container mx-auto px-4 xl:px-0 flex flex-col'>
             <Navbar />
             {children}            
