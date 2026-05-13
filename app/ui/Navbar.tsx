@@ -7,7 +7,7 @@ async function Navbar() {
   const user = session?.user;
 
   return (
-    <header className="pt-5 pb-1 flex justify-between items-center">
+    <header className="pt-5 pb-7 lg:pb-1 flex justify-between items-center">
       <Link href='/'>
         <Image
           src="/logo.svg"

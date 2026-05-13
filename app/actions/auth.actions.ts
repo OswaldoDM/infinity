@@ -1,5 +1,4 @@
 'use server';
-
 import { signIn, signOut } from '@/auth';
 import { createUser, findUserByEmail } from '@/lib/database/repositories/auth.repository';
 import { registerSchema } from "@/lib/auth/schemas";
@@ -25,6 +24,7 @@ export const registerAction: AuthAction = async (state, formData) => {
     };    
 
     const { email, password, username } = registerSchema.parse(rawData);
+    
     const existingUser = await findUserByEmail(email);
     if (existingUser) {
       return { error: { message: "This email is already registered" } };
