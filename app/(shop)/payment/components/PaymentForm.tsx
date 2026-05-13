@@ -24,6 +24,7 @@ function PaymentForm({ onSuccess, onBack }: Props) {
   const elements = useElements();
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
   const [paymentError, setPaymentError] = useState('');
 
   const handleSubmit = async (e: FormSubmit) => {
@@ -65,34 +66,48 @@ function PaymentForm({ onSuccess, onBack }: Props) {
 
   return (
     <form onSubmit={handleSubmit}>
-      {/* PaymentElement renderiza el formulario completo de Stripe. */}      
-      <PaymentElement />
-
-      {paymentError && (
-        <p className="text-red-500 text-xs mt-3 font-inter">{paymentError}</p>
+      
+      {!isElementReady && (
+        <div className="flex justify-center items-center py-10">
+          <div className="animate-spin rounded-full w-8 h-8 border-b-4 border-gray-900"></div>
+        </div>
       )}
 
-      <div className="flex gap-2 mt-5">
-        <span className="w-1/2">
-          <Button
-            type="button"
-            disabled={isProcessing}
-            onClick={onBack}
-            variant="secondary"
-          >
-            Back
-          </Button>
-        </span>
-        <span className="w-1/2">
-          <Button
-            type="submit"
-            disabled={isProcessing || !stripe || !elements}
-            variant="primary"
-          >
-            {isProcessing ? 'Processing...' : 'Pay'}
-          </Button>
-        </span>
+      {/* PaymentElement renderiza el formulario completo de Stripe.
+          onReady se dispara cuando el formulario termina de cargar. */}
+      <div className={isElementReady ? '' : 'hidden'}>
+        <PaymentElement onReady={() => setIsElementReady(true)} />
       </div>
+
+      {isElementReady && (
+        <>
+          {paymentError && (
+            <p className="text-red-500 text-xs mt-3 font-inter">{paymentError}</p>
+          )}
+
+          <div className="flex gap-2 mt-5">
+            <span className="w-1/2">
+              <Button
+                type="button"
+                disabled={isProcessing}
+                onClick={onBack}
+                variant="secondary"
+              >
+                Back
+              </Button>
+            </span>
+            <span className="w-1/2">
+              <Button
+                type="submit"
+                disabled={isProcessing || !stripe || !elements}
+                variant="primary"
+              >
+                {isProcessing ? 'Processing...' : 'Pay'}
+              </Button>
+            </span>
+          </div>
+        </>
+      )}
     </form>
   );
 }
