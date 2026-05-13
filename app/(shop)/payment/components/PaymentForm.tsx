@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Button from '@/app/ui/Button';
 
 interface Props {
-  onSuccess: () => void;
+  onSuccess: (paymentIntentId: string) => void;
   onBack: () => void;
 }
 
@@ -42,7 +42,7 @@ function PaymentForm({ onSuccess, onBack }: Props) {
      - Si el pago es exitoso, Stripe dispara el webhook 
        payment_intent.succeeded, que es donde se crea la orden en la DB.
     */
-    const { error } = await stripe.confirmPayment({
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       redirect: 'if_required', // Solo redirige si el método de pago lo requiere (ej: 3D Secure)
       // Si necesitas redirigir siempre, usa: confirmParams: { return_url: 'https://tu-dominio.com/orders' }
@@ -56,10 +56,10 @@ function PaymentForm({ onSuccess, onBack }: Props) {
       // - expired_card: tarjeta expirada
       setPaymentError(error.message || 'An error occurred while processing your payment.');
       setIsProcessing(false);
-    } else {
-      // El pago fue exitoso (o no requirió acción adicional).
-      // La orden se creará automáticamente a través del webhook.
-      onSuccess();
+    } else if (paymentIntent) {
+      // El pago fue exitoso. Pasamos el paymentIntent.id al componente padre
+      // para que pueda hacer polling y buscar la orden creada por el webhook.
+      onSuccess(paymentIntent.id);
     }
   };
 

@@ -1,5 +1,6 @@
 'use server';
 import stripe from '@/lib/stripe';
+import { getOrderByPaymentIntentId } from '@/lib/database/repositories/orders.repository';
 
 /*
  - Crea un PaymentIntent en Stripe con el monto total de la orden.
@@ -56,5 +57,21 @@ export async function createPaymentIntent(
 }
 
 
-
-
+/*
+  Busca una orden en la base de datos usando el stripe_payment_intent_id.
+  
+  Se usa para hacer polling desde el frontend después de que el pago es exitoso.
+  Como la orden la crea el webhook (de forma asíncrona), el frontend necesita
+  esperar a que exista antes de poder redirigir a /orders/{orderId}.
+*/
+export async function getOrderIdByPaymentIntent(paymentIntentId: string) {
+  try {
+    const order = await getOrderByPaymentIntentId(paymentIntentId);
+    if (order) {
+      return { success: true, orderId: order.id };
+    }
+    return { success: false };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}

@@ -9,9 +9,10 @@ import { useRouter } from "next/navigation";
 import AddressFormModal from "./AddressFormModal";
 import DeleteAddressModal from "./DeleteAddressModal";
 import PaymentForm from "./PaymentForm";
-import { createPaymentIntent } from "@/app/actions/stripe.actions";
+import { createPaymentIntent, getOrderIdByPaymentIntent } from "@/app/actions/stripe.actions";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
+import Image from "next/image";
 
 // Cargar Stripe fuera del componente para evitar re-crearlo en cada render.
 // loadStripe() solo hace la carga una vez y cachea el resultado.
@@ -80,15 +81,36 @@ function Steps({products, userAddresses, userId}: Props) {
       setIsGoingToPayment(false);
    };
 
-   // Cuando el pago es exitoso, Stripe dispara el webhook que crea la orden.
-   // Redirigimos al usuario a la página de órdenes.
-   const handlePaymentSuccess = () => {
+   // Cuando el pago es exitoso, hacer polling hasta que el webhook cree la orden.
+   // Luego redirigir a la página de esa orden específica.
+   const handlePaymentSuccess = async (paymentIntentId: string) => {
       setIsSubmitting(true);
       clearCart();
-      // TODO: Idealmente redirigir a la orden específica.
-      // Para eso se necesitaría que el webhook notifique al frontend
-      // del orderId creado, o buscar la orden más reciente del usuario.
-      router.push('/orders');
+
+      // Polling: intentar cada 1.5 segundos, máximo 10 intentos (15 segundos).
+      // El webhook normalmente crea la orden en menos de 2 segundos.
+      const MAX_ATTEMPTS = 10;
+      const INTERVAL_MS = 1500;
+
+      for (let i = 0; i < MAX_ATTEMPTS; i++) {
+         /*
+         Esta promesa es una pausa de 1.5 segundos entre cada intento. 
+         Sin ella, el loop haría las 10 consultas a la base de datos de 
+         inmediato, antes de que el webhook tenga tiempo de crear la orden.
+         */
+         await new Promise(resolve => setTimeout(resolve, INTERVAL_MS));
+
+         const result = await getOrderIdByPaymentIntent(paymentIntentId);
+         if (result.success && result.orderId) {
+            router.push(`/orders/${result.orderId}`);
+            return;
+         }
+      }
+
+      // Fallback: si después de 15 segundos no se encuentra la orden,
+      // redirigir a la home page.
+      // TODO: mostrar un mensaje de error al usuario en vez de redirigirlo.
+      router.push('/');
    };
 
 
@@ -187,67 +209,82 @@ function Steps({products, userAddresses, userId}: Props) {
             <div className='animate-spin rounded-full h-32 w-32 border-b-4 border-gray-900'></div>      
          </div>
          ) : (
-         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex justify-center gap-6 opacity-100' : 'hidden opacity-0'}`}>                       
+         <div className={`mt-12 2xl:mt-16  ${currentStep === 2 ? 'flex flex-col-reverse lg:flex-row justify-center items-start gap-8 lg:gap-12 opacity-100' : 'hidden opacity-0'}`}>                       
             
-            {/* SUMMARY */}
-            <div className="">
-               <h3 className="mb-3">Summary</h3>
-               <div className='bg-white rounded-xl py-5 px-6'>
-                  <div className={`max-h-[220px] mb-6 ${fullCart.length > 3 ? 'overflow-y-scroll' : ''}`}>
-                     {fullCart.map((item) => (
-                     <div key={item.product?.id} className={`flex items-center gap-2 mb-6 ${fullCart.length > 3 ? 'mr-3' : ''}`}>
-                        <SmallProductImg 
-                           src={item.product?.image_url} 
-                           alt={item.product?.name} 
-                           width='w-[54px]' 
-                           height='h-[54px]' 
-                           sizes="54px"
+            {/* PAYMENT */}
+            <div className="w-full lg:w-1/2 max-w-md">               
+               <h3 className="mb-4 text-xl font-bold tracking-tight">Payment Details</h3>               
+               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8">                  
+                  {clientSecret && (
+                     <Elements stripe={stripePromise} options={{
+                        clientSecret,
+                        appearance: {
+                           theme: 'stripe',
+                           variables: {
+                              colorPrimary: '#000000',
+                              borderRadius: '8px',
+                              fontFamily: 'Inter, system-ui, sans-serif',
+                              colorBackground: '#ffffff',
+                              colorText: '#1f2937',
+                           },
+                        },
+                     }}>
+                        <PaymentForm 
+                           onSuccess={handlePaymentSuccess}
+                           onBack={() => setCurrentStep(1)}
                         />
-                        <div className=" min-w-[200px]">
-                           <p className="font-semibold text-base">{item.product?.name}</p>
+                     </Elements>
+                  )}
+               </div>
+            </div>            
+
+            {/* SUMMARY */}
+            <div className="w-full lg:w-1/2 max-w-md">
+               <h3 className="mb-4 text-xl font-bold tracking-tight">Order Summary</h3>
+               <div className='bg-white rounded-2xl shadow-sm border border-gray-100 p-6 lg:p-8'>
+                  <div className={`max-h-[280px] mb-6 ${fullCart.length > 3 ? 'overflow-y-auto pr-2 custom-scrollbar' : ''}`}>
+                     {fullCart.map((item) => (
+                     <div key={item.product?.id} className={`flex items-start gap-4 mb-5`}>
+                        <div className="bg-gray-50 rounded-lg p-2 shrink-0 border border-gray-100">
+                           <SmallProductImg 
+                              src={item.product?.image_url} 
+                              alt={item.product?.name} 
+                              width='w-[60px]' 
+                              height='h-[60px]' 
+                              sizes="60px"
+                           />
+                        </div>
+                        <div className="flex-1 pt-1">
+                           <p className="font-semibold text-sm line-clamp-2">{item.product?.name}</p>
                            <p className="text-xs text-gray-500 mt-1 font-inter">Qty: {item.quantity}</p>
                         </div>                     
-                        <p className="font-semibold">${((item.product?.price || 0) * item.quantity)}</p>                     
+                        <p className="font-bold text-sm pt-1">${((item.product?.price || 0) * item.quantity)}</p>                     
                      </div>
                      ))}
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipping Address</p>                  
-                     <p className="max-w-[200px] text-gray-600">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
+                  
+                  <div className="pt-5 border-t border-gray-100 font-inter mb-4">
+                     <p className="font-semibold text-black mb-1 text-sm">Shipping Address</p>                  
+                     <p className="text-sm text-gray-500 leading-relaxed">{finalAddress?.street}, {finalAddress?.city}, {finalAddress?.state} {finalAddress?.postal_code}</p>
                   </div>
-                  <div className="font-inter mb-5">
-                     <p className="font-bold text-black_secondary mb-1">Shipment Method</p>
-                     <p className="text-gray-600">Free Shipping</p>
+                  
+                  <div className="pt-4 border-t border-gray-100 font-inter mb-6">
+                     <div className="flex justify-between items-center text-sm mb-3">
+                        <p className="text-gray-500">Subtotal</p>
+                        <p className="font-semibold">${totalCart}</p>
+                     </div>
+                     <div className="flex justify-between items-center text-sm mb-2">
+                        <p className="text-gray-500">Shipping</p>
+                        <p className="font-semibold text-emerald-600">Free</p>
+                     </div>
                   </div>
-                  <div className="font-inter font-bold flex justify-between mt-6">
-                     <p>Total</p>
-                     <p>${totalCart}</p>
+                  
+                  <div className="pt-5 border-t border-gray-200 font-inter font-black flex justify-between items-center">
+                     <p className="text-lg">Total</p>
+                     <p className="text-xl">${totalCart}</p>
                   </div>
                </div>            
             </div>         
-
-            {/* PAYMENT */}
-            <div className="min-w-[360px] ">
-               <h3 className="mb-3">Payment</h3>
-               {clientSecret && (
-                  <Elements stripe={stripePromise} options={{
-                     clientSecret,
-                     appearance: {
-                        theme: 'stripe',
-                        variables: {
-                           colorPrimary: '#000000',
-                           borderRadius: '12px',
-                           fontFamily: 'Inter, system-ui, sans-serif',
-                        },
-                     },
-                  }}>
-                     <PaymentForm 
-                        onSuccess={handlePaymentSuccess}
-                        onBack={() => setCurrentStep(1)}
-                     />
-                  </Elements>
-               )}
-            </div>            
       </div>
       )}                  
       <AddressFormModal

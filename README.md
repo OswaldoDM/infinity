@@ -7,13 +7,13 @@ A modern, full-stack e-commerce platform built with **Next.js 16**, **Auth.js (v
 - **🔐 Secure Authentication**: Implemented with Auth.js (v5 Beta) and bcryptjs for password hashing.
 - **📦 Product Management**: Dynamic product browsing and detailed views.
 - **🛒 Shopping Cart**: Fully functional cart for managing selections before checkout.
-- **💳 Checkout & Payments**: Seamless multi-step payment and order confirmation process.
+- **💳 Checkout & Payments**: Seamless multi-step payment process powered by **Stripe**. The integration has been thoroughly tested end-to-end to ensure secure and reliable transaction handling.
 - **👤 User Profiles**: Dedicated dashboard for users to manage their info and view order history.
 - **🖼️ Image Hosting**: Integrated Cloudinary support for high-performance image handling.
 - **🛠️ Admin Dashboard**: Comprehensive interface for managing products, users, and orders.
 - **📊 Inventory Control**: Full CRUD functionality for products and categories.
 - **📋 Order Tracking**: Real-time updates and management of order fulfillment statuses.
-- **⚡ Performance First**: Leveraging Next.js 15 Server Components and Server Actions for speed and SEO.
+- **⚡ Performance First**: Leveraging the new **React Compiler** for automatic re-render optimizations, alongside Next.js 16 Server Components and Server Actions for maximum speed and SEO.
 
 ## 🛠️ Tech Stack
 
@@ -23,6 +23,7 @@ A modern, full-stack e-commerce platform built with **Next.js 16**, **Auth.js (v
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **Validation**: [Zod](https://zod.dev/)
 - **Media**: [Cloudinary](https://cloudinary.com/)
+- **Payments**: [Stripe](https://stripe.com/)
 
 ## 🔍 Search Engine Optimization (SEO)
 

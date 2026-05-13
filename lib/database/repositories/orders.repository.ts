@@ -137,7 +137,9 @@ export async function getOrderByUserID(userId: number): Promise<Order[]> {
 /* 
   - Buscar una orden por su stripe_payment_intent_id.
   - Se usa en el webhook para verificar idempotencia (evitar crear órdenes duplicadas
-    si Stripe envía el mismo evento más de una vez).
+    si Stripe envía el mismo evento más de una vez).  
+  - Tambien se usa en stripe.actions para obtener la orderId del pago mas reciente y 
+    hacer polling y verificar que la orden se ha creado en Steps.tsx.
 */
 export async function getOrderByPaymentIntentId(paymentIntentId: string): Promise<Order | null> {
   const query = BASE_ORDER_QUERY + `
@@ -151,7 +153,7 @@ export async function getOrderByPaymentIntentId(paymentIntentId: string): Promis
 /*
 
 Porque necesitamos la id que tiene cada producto en 
-order_items en el objeto items que creamos en la 
+la tabla order_items en el objeto items que creamos en la 
 BASE_ORDER_QUERY? 
 
 Para devoluciones, quejas o cancelaciones parciales
